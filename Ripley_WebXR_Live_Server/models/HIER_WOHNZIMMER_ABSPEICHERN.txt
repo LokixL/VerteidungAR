@@ -1,0 +1,2 @@
+Optional: GLB-Modell unter living-room.glb hier ablegen.
+Ohne Datei wird das integrierte Demo-Wohnzimmer verwendet.
