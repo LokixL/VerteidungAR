@@ -86,3 +86,26 @@ body.in-xr #ar-launch{display:none}
   #controls-panel.is-collapsed {width:max-content;max-height:none;padding:5px 7px;}
   #controls-panel.is-collapsed .menu-toggle {min-height:32px;padding:5px 10px;}
 }
+
+/* V5: thermal walkthrough and false-colour legend */
+.thermal-steps{margin-top:10px;border:1px solid rgba(111,215,197,.25);background:rgba(14,49,65,.83);padding:10px;border-radius:12px}
+.thermal-steps[hidden]{display:none!important}
+.thermal-step-kicker{font-size:10px;letter-spacing:.12em;color:#85e8c2;font-weight:700}
+.thermal-step-navigation{margin-top:5px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.thermal-step-navigation button{min-width:39px;padding:7px;min-height:38px;font-size:18px}
+.thermal-step-navigation button:disabled{opacity:.35;cursor:default}
+.thermal-step-navigation strong{font-size:12px;text-align:center}
+.thermal-explanation{font-size:11px;line-height:1.4;color:#dce9f1;margin:7px 0 0}
+.thermal-legend{margin-top:13px;padding:8px 0 3px}
+.thermal-legend-gradient{height:13px;border-radius:7px;border:1px solid rgba(255,255,255,.18);background:linear-gradient(90deg,#101d62 0%,#176bcd 10%,#23b98a 23%,#f9de45 39%,#ef5e22 63%,#ef2536 92%,#fff6e4 100%)}
+.thermal-legend-ticks{display:flex;justify-content:space-between;color:#d4dfec;font-size:10px;margin-top:4px}
+.contact-field{margin-top:12px;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)}
+.contact-dot{background:#ed5e22}
+@media (orientation: landscape) and (max-height:650px){.thermal-steps{padding:7px;margin-top:6px}.thermal-step-navigation button{min-height:30px;padding:3px}.thermal-explanation{font-size:10px;margin-top:4px}.thermal-legend{margin-top:7px}}
+
+/* V6: thermal palette replaces numeric sliders. */
+.temperature-panel{border-color:rgba(71,156,240,.38)}
+.temperature-heading span{color:#93c5fd}
+.thermal-legend{margin-top:8px}
+.thermal-legend-gradient{height:17px}
+.temperature-panel .small-note{line-height:1.5}
