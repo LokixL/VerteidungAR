@@ -43,26 +43,14 @@ app.innerHTML = `
           <button id="rotate-right" class="stepper" type="button" aria-label="15 Grad nach rechts drehen">↷</button>
         </div>
       </div>
-      <div class="thermal-steps" id="thermal-steps" hidden>
-        <span class="thermal-step-kicker">THERMAL WALKTHROUGH</span>
-        <div class="thermal-step-navigation">
-          <button type="button" id="thermal-prev" aria-label="Vorheriger thermischer Schritt">←</button>
-          <strong id="thermal-step-label">1 / 5 · Ausgangszustand</strong>
-          <button type="button" id="thermal-next" aria-label="Nächster thermischer Schritt">→</button>
-        </div>
-        <p id="thermal-explanation" class="thermal-explanation"></p>
-      </div>
-      <div class="temperature-panel" id="temperature-panel" hidden>
-        <div class="temperature-heading"><strong>Wärmebild · Falschfarben</strong><span>Automatische Darstellung</span></div>
-        <div class="thermal-legend" aria-label="Qualitative Falschfarbenskala">
-          <div class="thermal-legend-gradient"></div>
-          <div class="thermal-legend-ticks"><span>Kühl</span><span>Mäßig warm</span><span>Heiß</span></div>
-        </div>
-        <p class="small-note"><strong>Schematische Illustration – keine Temperaturmessung oder Brandsimulation.</strong> Die Falschfarben verdeutlichen relative Unterschiede. Eine echte Wärmebildkamera bildet vor allem Oberflächenstrahlung ab. Die eingeblendete Gasströmung bei Convection ist eine didaktische Zusatzvisualisierung, kein direktes IR-Bild der Luft.</p>
+      <div id="thermal-info" class="thermal-info" hidden>
+        <div class="thermal-info-title">Thermal View · schematische Falschfarben</div>
+        <div class="thermal-gradient"></div>
+        <div class="thermal-ticks"><span>kühl</span><span>warm</span><span>heiß</span></div>
+        <p id="thermal-explanation" class="thermal-explanation">Keine Messwerte: Die Wärmeverteilung illustriert den ausgewählten Mechanismus.</p>
       </div>
       <p class="hint" id="hint">Desktop: Modell mit der Maus drehen. Android: START AR drücken, Tisch anvisieren und einmal ins Kamerabild tippen.</p>
     </section>
-    <div id="ar-place" class="ar-place" hidden><button id="place-button" type="button">⌖ Wohnzimmer platzieren</button></div>
     <div id="ar-launch"></div>
   </div>`;
 
@@ -133,7 +121,7 @@ function clearGroup(group) {
       if (object.isMesh) {
         object.geometry?.dispose();
         const materials=Array.isArray(object.material)?object.material:[object.material];
-        materials.forEach(m=>{ if(m !== thermalMaterial) m?.dispose(); });
+        materials.forEach(m=>m?.dispose());
       }
     });
   }
@@ -210,179 +198,147 @@ function buildConduction() {
   }
 }
 buildRoom();buildFire();buildRadiation();buildConvection();buildConduction();
-// V6 THERMAL CAMERA VIEW
-// Entire 3D room (including an optional GLB) is recoloured per pixel in a
-// fixed local coordinate system. This is a conceptual false-colour view, NOT
-// an infrared-camera measurement, temperature model, or prediction.
-const thermalModeIds = ['room', 'fire', 'radiation', 'convection', 'conduction'];
-const thermalModeNumbers = {room:0, fire:1, radiation:2, convection:3, conduction:4};
-const thermalUniforms = {
-  uMode:{value:0},
-  uRoomInverse:{value:new THREE.Matrix4()},
-};
-const thermalMaterial = new THREE.ShaderMaterial({
-  uniforms:thermalUniforms,
-  side:THREE.DoubleSide,
-  depthTest:true,
-  depthWrite:true,
-  toneMapped:false,
-  vertexShader:`
-    uniform mat4 uRoomInverse;
-    varying vec3 vRoomPosition;
-    void main(){
-      vec4 worldPos = modelMatrix * vec4(position, 1.0);
-      vRoomPosition = (uRoomInverse * worldPos).xyz;
-      gl_Position = projectionMatrix * viewMatrix * worldPos;
-    }
-  `,
-  fragmentShader:`
-    precision highp float;
-    uniform int uMode;
-    varying vec3 vRoomPosition;
-    float gauss3(vec3 a, vec3 b, vec3 radius){
-      vec3 d=(a-b)/radius;
-      return exp(-dot(d,d)*2.0);
-    }
-    float between(float value, float lo, float hi, float smoothing){
-      return smoothstep(lo-smoothing,lo+smoothing,value)*(1.0-smoothstep(hi-smoothing,hi+smoothing,value));
-    }
-    vec3 thermalPalette(float heat){
-      // Single fixed, qualitative palette for comparisons between steps.
-      float h=clamp(heat,0.0,1.0);
-      vec3 c0=vec3(0.035,0.025,0.22);
-      vec3 c1=vec3(0.03,0.30,0.78);
-      vec3 c2=vec3(0.08,0.76,0.55);
-      vec3 c3=vec3(1.00,0.83,0.15);
-      vec3 c4=vec3(0.98,0.20,0.09);
-      vec3 c5=vec3(1.00,0.97,0.82);
-      if(h<0.18) return mix(c0,c1,h/0.18);
-      if(h<0.35) return mix(c1,c2,(h-0.18)/0.17);
-      if(h<0.52) return mix(c2,c3,(h-0.35)/0.17);
-      if(h<0.73) return mix(c3,c4,(h-0.52)/0.21);
-      return mix(c4,c5,(h-0.73)/0.27);
-    }
-    void main(){
-      vec3 p=vRoomPosition;
-      // Cold background geometry, slightly warmer around the room floor.
-      float heat=0.10 + 0.035*clamp(p.y/0.28,0.0,1.0);
-      if(uMode>0){
-        // Electrical fault is a bright, small hotspot in ALL fire scenarios.
-        heat=max(heat,0.97*gauss3(p,vec3(0.213,0.034,-0.194),vec3(0.068,0.050,0.060)));
-        // Nearby structure receives a little warmth.
-        heat=max(heat,0.31*gauss3(p,vec3(0.24,0.12,-0.23),vec3(0.19,0.17,0.12)));
-      }
-      if(uMode==2){
-        // Radiation: furniture and nearby exposed surfaces are warmer.
-        heat=max(heat,0.66*gauss3(p,vec3(-0.16,0.110,0.02),vec3(0.26,0.13,0.19)));
-        heat=max(heat,0.52*gauss3(p,vec3(-0.23,0.17,-0.23),vec3(0.18,0.18,0.075)));
-        heat=max(heat,0.48*gauss3(p,vec3(0.25,0.092,-0.13),vec3(0.13,0.17,0.13)));
-      }
-      if(uMode==3){
-        // Convection: warm upper enclosure boundary (air is illustrated separately).
-        float above= smoothstep(0.11,0.25,p.y);
-        float nearSource=exp(-pow((p.x-0.16)/0.32,2.0));
-        heat=max(heat,(0.22+0.46*above)*nearSource*above);
-      }
-      if(uMode==4){
-        // Conduction: restricted to the power strip and direct-contact region.
-        vec3 d=abs(p-vec3(0.18,0.028,-0.194));
-        float path=between(p.x,0.135,0.25,0.014)
-          *(1.0-smoothstep(0.010,0.045,d.y))
-          *(1.0-smoothstep(0.015,0.05,d.z));
-        heat=max(heat,0.70*path);
-      }
-      gl_FragColor=vec4(thermalPalette(heat),1.0);
-    }
-  `,
-});
-
-const originals = new WeakMap();
-function applyRoomThermal(enabled){
-  roomRoot.traverse(mesh=>{
-    if(!mesh.isMesh) return;
-    if(enabled){
-      if(!originals.has(mesh)) originals.set(mesh,mesh.material);
-      mesh.material=thermalMaterial;
-    }else if(originals.has(mesh)) mesh.material=originals.get(mesh);
-  });
-}
-
-// A qualitative translucent plume is shown ONLY during Convection.
-// Visible hot gas is an educational overlay, not how a standard IR camera sees air.
-const thermalPlume=new THREE.Group();
-contentRoot.add(thermalPlume);
-const plumeMaterial=new THREE.ShaderMaterial({
-  transparent:true,depthWrite:false,side:THREE.DoubleSide,toneMapped:false,
-  uniforms:{uTime:{value:0}},
-  vertexShader:`varying vec3 vPos; void main(){vPos=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
-  fragmentShader:`precision mediump float; varying vec3 vPos; uniform float uTime;
-    void main(){
-      float h=clamp(vPos.y/0.245,0.0,1.0);
-      vec3 orange=vec3(1.0,0.38,0.08);
-      vec3 yellow=vec3(1.0,0.86,0.20);
-      vec3 cool=vec3(0.16,0.67,0.95);
-      vec3 col=mix(mix(orange,yellow,smoothstep(0.05,0.5,h)),cool,smoothstep(0.55,1.0,h));
-      float alpha=0.36*(1.0-smoothstep(0.78,1.0,h))*(0.88+0.12*sin(uTime*2.0+h*17.0));
-      gl_FragColor=vec4(col,alpha);
-    }`
-});
-// Three increasingly broad sections give the viewer a 3-D rising plume.
-for(const [height,radius,offset] of [[0.095,0.032,0],[0.14,0.046,0.063],[0.14,0.079,0.125]]){
-  const geom=new THREE.CylinderGeometry(radius,radius*0.46,height,40,4,true);
-  geom.translate(0,height/2+offset,0);
-  const mesh=new THREE.Mesh(geom,plumeMaterial);
-  mesh.position.set(SOURCE.x,SOURCE.y,SOURCE.z);
-  mesh.renderOrder=8;
-  thermalPlume.add(mesh);
-}
-
-const thermalDescriptions={
- room:'Gleichmäßig kühles Wohnzimmer ohne aktive Brandquelle.',
- fire:'Eine lokale Wärmequelle an der Steckdosenleiste erscheint hell. Andere Flächen bleiben kühl.',
- radiation:'Nahe und exponierte Oberflächen erwärmen sich durch Wärmestrahlung.',
- convection:'Warme obere Flächen und ein schematischer aufsteigender Gasstrom werden gezeigt.',
- conduction:'Eine eng begrenzte Wärmeausbreitung entlang der Steckdosenleiste wird sichtbar.'
+// Thermal View is an OPTIONAL layer. Keep all original scene buttons, effects,
+// and the WebXR ARButton / hit-test untouched. No temperature sliders.
+// Qualitative illustrative temperatures, not calculated temperatures or camera data.
+const THERMAL_SCENES = {
+  room:       {source:20, air:20, surface:20, contact:20,
+    note:'Ausgangszustand: gleichmäßig kühle Oberflächen.'},
+  fire:       {source:200, air:35, surface:25, contact:65,
+    note:'Brand: lokaler Hotspot an der Steckdosenleiste.'},
+  radiation:  {source:240, air:45, surface:110, contact:70,
+    note:'Radiation: benachbarte Oberflächen werden bestrahlt und erwärmen sich.'},
+  convection: {source:240, air:120, surface:55, contact:80,
+    note:'Convection: Heißgase steigen auf und erwärmen die obere Raumzone.'},
+  conduction: {source:240, air:40, surface:30, contact:145,
+    note:'Conduction: lokale Wärmeleitung in der Steckdosenleiste.'}
 };
 let currentView='normal';
-let currentState='room';
-function updateThermalAppearance(){
-  const thermal=currentView==='thermal';
-  thermalUniforms.uMode.value=thermalModeNumbers[currentState];
-  applyRoomThermal(thermal);
-  thermalPlume.visible=thermal && currentState==='convection';
-  // Keep ALL established mechanism visualizations in both Normal and Thermal View.
-  // Thermal View recolours the room, but does not remove the explanatory effects.
-  fireFx.visible=currentState!=='room';
-  radiationFx.visible=currentState==='radiation';
-  convectionFx.visible=currentState==='convection';
-  conductionFx.visible=currentState==='conduction';
-  document.querySelector('#thermal-step-label').textContent=`${thermalModeIds.indexOf(currentState)+1} / 5 · ${states[currentState].label}`;
-  document.querySelector('#thermal-explanation').textContent=thermalDescriptions[currentState];
-  document.querySelector('#thermal-prev').disabled=currentState==='room';
-  document.querySelector('#thermal-next').disabled=currentState==='conduction';
+let thermalState='room';
+const thermalOverlay=new THREE.Group();
+contentRoot.add(thermalOverlay);
+const palette={
+  cold:'#202263', cool:'#2151a0', mild:'#278f95', warm:'#efbb37',
+  hot:'#f36a25', extreme:'#fff2c9'
+};
+const THERMAL_MATERIALS=Object.fromEntries(Object.entries(palette).map(([k,v])=>
+  [k,new THREE.MeshBasicMaterial({color:v,side:THREE.DoubleSide})]));
+const roleByIndex=['floor','wall','wall','sofa','sofa','sofa','sofa',
+  'carpet','table','table','table','table','table','cabinet','strip',
+  'strip','strip','strip','window','curtain','curtain'];
+function markProceduralRoom(){
+  roomRoot.children.forEach((child,i)=>{if(child.isMesh)child.userData.thermalRole=roleByIndex[i]||'other';});
+}
+markProceduralRoom();
+
+// 3D temperature labels face the viewer. Display values are EXAMPLES only.
+function makeThermalLabel(){
+  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=128;
+  const texture=new THREE.CanvasTexture(canvas);
+  texture.colorSpace=THREE.SRGBColorSpace;
+  const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,transparent:true,depthTest:false,depthWrite:false}));
+  sprite.scale.set(0.21,0.052,1);
+  thermalOverlay.add(sprite);
+  return {canvas,texture,sprite};
+}
+const thermalLabels={source:makeThermalLabel(),air:makeThermalLabel(),surface:makeThermalLabel()};
+thermalLabels.source.sprite.position.set(0.17,0.123,-0.17);
+thermalLabels.air.sprite.position.set(0.035,0.275,-0.06);
+thermalLabels.surface.sprite.position.set(-0.155,0.19,0.06);
+function drawLabel(label,text){
+  const ctx=label.canvas.getContext('2d');ctx.clearRect(0,0,512,128);
+  ctx.fillStyle='rgba(10,18,46,0.90)';
+  ctx.beginPath();ctx.roundRect(4,10,504,105,22);ctx.fill();
+  ctx.strokeStyle='#93e7ff';ctx.lineWidth=3;ctx.stroke();
+  ctx.font='600 39px system-ui, sans-serif';ctx.fillStyle='#fff';
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,256,64,475);
+  label.texture.needsUpdate=true;
+}
+const heatPlume=new THREE.Mesh(
+  new THREE.ConeGeometry(0.085,0.24,28,1,true),
+  new THREE.MeshBasicMaterial({color:'#f9ab31',transparent:true,opacity:0.2,
+    depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending})
+);
+// Larger at the top, narrowing down towards the hot power strip.
+heatPlume.rotation.z=Math.PI; heatPlume.position.set(SOURCE.x,0.167,SOURCE.z);
+thermalOverlay.add(heatPlume);
+const ceilingHeat=new THREE.Mesh(
+  new THREE.PlaneGeometry(0.53,0.38),
+  new THREE.MeshBasicMaterial({color:'#ee8a2d',transparent:true,opacity:0.20,
+    depthWrite:false,side:THREE.DoubleSide})
+);
+ceilingHeat.rotation.x=-Math.PI/2;
+ceilingHeat.position.set(0.015,0.273,-0.01);
+thermalOverlay.add(ceilingHeat);
+const sourceSpot=new THREE.Mesh(
+  new THREE.SphereGeometry(0.026,16,12),
+  new THREE.MeshBasicMaterial({color:'#fff2c9',transparent:true,opacity:0.86,depthWrite:false})
+);
+sourceSpot.position.copy(SOURCE); thermalOverlay.add(sourceSpot);
+const radiationPatch=new THREE.Mesh(
+  new THREE.PlaneGeometry(0.19,0.065),
+  new THREE.MeshBasicMaterial({color:'#edaa34',transparent:true,opacity:0.38,
+    side:THREE.DoubleSide,depthWrite:false})
+);
+radiationPatch.position.set(-0.155,0.153,-0.007); thermalOverlay.add(radiationPatch);
+const conductionPatch=box(thermalOverlay,[0.072,0.016,0.035],
+  [0.213,0.026,-0.194],new THREE.MeshBasicMaterial({color:'#f67722',transparent:true,
+  opacity:0.7,depthWrite:false}));
+
+function applyThermalMaterials(){
+  // GLB objects are displayed in a cool false colour unless their geometry
+  // was explicitly tagged. The local hotspot and plume overlays remain aligned
+  // to the procedural demo's SOURCE; adjust for a different GLB layout.
+  roomRoot.traverse(obj=>{
+    if(!obj.isMesh)return;
+    if(!obj.userData.normalMaterial)obj.userData.normalMaterial=obj.material;
+    if(currentView!=='thermal'){
+      obj.material=obj.userData.normalMaterial;return;
+    }
+    const role=obj.userData.thermalRole||'other';
+    let level=role==='floor'?'cold':'cool';
+    if(role==='strip')level=thermalState==='room'?'cool':
+      thermalState==='conduction'?'extreme':'hot';
+    if(role==='sofa')level=thermalState==='radiation'?'hot':
+      thermalState==='convection'?'mild':'cool';
+    if(role==='curtain')level=thermalState==='radiation'?'warm':
+      thermalState==='convection'?'mild':'cool';
+    if(role==='cabinet')level=thermalState==='radiation'?'warm':'cool';
+    if(role==='wall'&&thermalState==='convection')level='mild';
+    obj.material=THERMAL_MATERIALS[level];
+  });
+}
+function updateThermalView(){
+  const isThermal=currentView==='thermal';
+  const t=THERMAL_SCENES[thermalState];
+  thermalOverlay.visible=isThermal;
+  heatPlume.visible=isThermal&&thermalState==='convection';
+  ceilingHeat.visible=isThermal&&thermalState==='convection';
+  radiationPatch.visible=isThermal&&thermalState==='radiation';
+  conductionPatch.visible=isThermal&&thermalState==='conduction';
+  sourceSpot.visible=isThermal&&thermalState!=='room';
+  thermalLabels.source.sprite.visible=isThermal&&thermalState!=='room';
+  thermalLabels.air.sprite.visible=isThermal&&thermalState==='convection';
+  thermalLabels.surface.sprite.visible=isThermal&&thermalState==='radiation';
+  drawLabel(thermalLabels.source,`Quelle ~${t.source} °C`);
+  drawLabel(thermalLabels.air,`Heißgase ~${t.air} °C`);
+  drawLabel(thermalLabels.surface,`Sofa ~${t.surface} °C`);
+  document.querySelector('#thermal-info').hidden=!isThermal;
+  document.querySelector('#thermal-explanation').textContent=t.note+
+    ' Beispielwerte, keine Messung oder validierte Simulation.';
+  applyThermalMaterials();
 }
 function setView(view){
   currentView=view==='thermal'?'thermal':'normal';
-  const thermal=currentView==='thermal';
-  document.querySelector('#temperature-panel').hidden=!thermal;
-  document.querySelector('#thermal-steps').hidden=!thermal;
-  for(const [id,value] of [['view-normal','normal'],['view-thermal','thermal']]){
+  for(const [id,v] of [['view-normal','normal'],['view-thermal','thermal']]){
     const btn=document.getElementById(id);
-    btn.classList.toggle('active',value===currentView);
-    btn.setAttribute('aria-pressed',String(value===currentView));
+    btn.classList.toggle('active',currentView===v);
+    btn.setAttribute('aria-pressed',String(currentView===v));
   }
-  if(!renderer.xr.isPresenting) scene.background=new THREE.Color(thermal?'#0c1024':'#172333');
-  updateThermalAppearance();
+  updateThermalView();
 }
 document.querySelector('#view-normal').addEventListener('click',()=>setView('normal'));
 document.querySelector('#view-thermal').addEventListener('click',()=>setView('thermal'));
-for(const [id,offset] of [['thermal-prev',-1],['thermal-next',1]]){
-  document.querySelector('#'+id).addEventListener('click',e=>{
-    e.stopPropagation();
-    const i=thermalModeIds.indexOf(currentState);
-    setState(thermalModeIds[Math.max(0,Math.min(4,i+offset))]);
-  });
-}
 setView('normal');
 
 // Scale the entire demonstration as one unit, keeping the hit-test placement untouched.
@@ -443,6 +399,7 @@ const states = {
   convection:{label:'Convection · Konvektion',description:'Aufsteigende heiße Gase transportieren Wärme in die obere Raumzone.'},
   conduction:{label:'Conduction · Wärmeleitung',description:'Wärme breitet sich innerhalb des festen Materials der Steckdosenleiste aus.'}
 };
+let currentState='room';
 const labels=[['room','Wohnzimmer'],['fire','Brand'],['radiation','Radiation'],['convection','Convection'],['conduction','Conduction']];
 for(const [id,label] of labels){
   const button=document.createElement('button');
@@ -452,7 +409,12 @@ for(const [id,label] of labels){
 }
 function setState(state){
   currentState=state;
-  updateThermalAppearance();
+  fireFx.visible=state!=='room';
+  radiationFx.visible=state==='radiation';
+  convectionFx.visible=state==='convection';
+  conductionFx.visible=state==='conduction';
+  thermalState=state;
+  updateThermalView(); // Thermal is optional; effect visibility remains unchanged
   UI.title.textContent=states[state].label;
   UI.description.textContent=states[state].description;
   for(const btn of UI.buttons.children)btn.classList.toggle('active',btn.dataset.mode===state);
@@ -461,7 +423,7 @@ setState('room');
 
 document.querySelector('#reset').addEventListener('click',e=>{
   e.stopPropagation();setState('room');setView('normal');setModelScale(1);setModelRotation(0);
-  if(renderer.xr.isPresenting){ placed=false;placementRoot.visible=false;updatePlacementControl();setStatus('Erneut eine Tischfläche anvisieren und tippen'); }
+  if(renderer.xr.isPresenting){ placed=false;placementRoot.visible=false;setStatus('Erneut eine Tischfläche anvisieren und tippen'); }
   else { placementRoot.position.set(0,0,0);placementRoot.quaternion.identity();setStatus('Wohnzimmer zurückgesetzt'); }
 });
 
@@ -485,7 +447,7 @@ fetch(modelUrl,{method:'HEAD'}).then(response=>{
     model.position.z-=(b.min.z+b.max.z)*0.5;
     model.position.y-=b.min.y;
     roomRoot.add(model);
-    updateThermalAppearance();
+    updateThermalView();
     setStatus('Meshy-Wohnzimmer geladen');
   },undefined,error=>console.warn('GLB konnte nicht geladen werden',error));
 }).catch(()=>{});
@@ -501,25 +463,19 @@ let hitTestSource=null;
 let requestingHitTest=false;
 const xrController=renderer.xr.getController(0);
 scene.add(xrController);
-const placeControl=document.querySelector('#ar-place');
-const placeButton=document.querySelector('#place-button');
-function updatePlacementControl(){
-  placeControl.hidden=!(renderer.xr.isPresenting && !placed && reticle.visible);
-}
 function place(){
   if(!renderer.xr.isPresenting || placed || !reticle.visible)return;
   placementRoot.position.setFromMatrixPosition(reticle.matrix);
   placementRoot.quaternion.setFromRotationMatrix(reticle.matrix);
   placementRoot.visible=true;
-  placed=true;reticle.visible=false;updatePlacementControl();
+  placed=true;reticle.visible=false;
   setStatus('Wohnzimmer platziert');
   UI.hint.textContent='Effekt auswählen oder Reset drücken, um neu zu platzieren.';
 }
 xrController.addEventListener('select',place);
-placeButton.addEventListener('click',e=>{e.stopPropagation();place();});
 // Prevent UI button presses from triggering placement in immersive AR.
 UI.overlay.addEventListener('beforexrselect',e=>{
-  if(e.target.closest('button, .panel, #ar-launch, #ar-place'))e.preventDefault();
+  if(e.target.closest('button, .panel, #ar-launch'))e.preventDefault();
 });
 const arButton=ARButton.createButton(renderer,{
   requiredFeatures:['hit-test'],
@@ -529,7 +485,7 @@ const arButton=ARButton.createButton(renderer,{
 document.querySelector('#ar-launch').appendChild(arButton);
 renderer.xr.addEventListener('sessionstart',()=>{
   document.body.classList.add('in-xr');scene.background=null;
-  placementRoot.visible=false;placed=false;reticle.visible=false;orbit.enabled=false;updatePlacementControl();
+  placementRoot.visible=false;placed=false;reticle.visible=false;orbit.enabled=false;
   const session=renderer.xr.getSession();
   if(!session?.domOverlayState){
     setStatus('DOM Overlay nicht verfügbar – Buttons eventuell nicht im AR-Modus sichtbar');
@@ -538,9 +494,9 @@ renderer.xr.addEventListener('sessionstart',()=>{
 renderer.xr.addEventListener('sessionend',()=>{
   hitTestSource?.cancel();hitTestSource=null;requestingHitTest=false;
   document.body.classList.remove('in-xr');
-  placementRoot.visible=true;placed=false;reticle.visible=false;orbit.enabled=true;updatePlacementControl();
+  placementRoot.visible=true;placed=false;reticle.visible=false;orbit.enabled=true;
   placementRoot.position.set(0,0,0);placementRoot.quaternion.identity();
-  scene.background=new THREE.Color(currentView==='thermal'?'#0c1024':'#172333');setStatus('3D-Vorschau bereit');
+  scene.background=new THREE.Color('#172333');setStatus('3D-Vorschau bereit');
 });
 async function requestHitTest(session){
   if(hitTestSource||requestingHitTest)return;
@@ -559,9 +515,7 @@ const clock=new THREE.Clock();
 renderer.setAnimationLoop((_time,frame)=>{
   const dt=Math.min(clock.getDelta(),0.06);
   const t=clock.elapsedTime;
-  roomRoot.updateWorldMatrix(true,false);
-  thermalUniforms.uRoomInverse.value.copy(roomRoot.matrixWorld).invert();
-  plumeMaterial.uniforms.uTime.value=t;
+  const heatIntensity=currentState==='room'?0:(currentState==='fire'?0.5:0.8);
   if(renderer.xr.isPresenting && frame && !placed){
     const session=renderer.xr.getSession();requestHitTest(session);
     if(hitTestSource){
@@ -574,16 +528,14 @@ renderer.setAnimationLoop((_time,frame)=>{
       }else reticle.visible=false;
     }
   }
-  // Placement button is visible only while a detected surface is ready.
-  updatePlacementControl();
   for(const child of fireFx.children){
     if(child.userData.smokeIndex!==undefined){
       const i=child.userData.smokeIndex,phase=((t*0.26+i/8)%1);
       child.position.set(SOURCE.x+0.018*Math.sin(i*2.7+phase*4), SOURCE.y+0.015+phase*0.19, SOURCE.z+0.013*Math.cos(i*1.7+phase*4));
       child.scale.setScalar(0.55+phase*1.3);
-      child.material.opacity=0.30*(1-phase);
+      child.material.opacity=(0.12+0.36*heatIntensity)*(1-phase);
     }
-    if(child.name==='ember')child.scale.setScalar(0.85+Math.sin(t*8)*0.14);
+    if(child.name==='ember')child.scale.setScalar((0.55+heatIntensity*0.95)*(0.85+Math.sin(t*8)*0.14));
   }
   for(const ring of radiationFx.children){
     if(ring.userData.phase!==undefined){
