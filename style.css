@@ -109,3 +109,10 @@ body.in-xr #ar-launch{display:none}
 .thermal-legend{margin-top:8px}
 .thermal-legend-gradient{height:17px}
 .temperature-panel .small-note{line-height:1.5}
+
+/* V7: Visible XR placement control without blocking scene or existing gestures. */
+.ar-place[hidden]{display:none!important}
+.ar-place{pointer-events:auto;position:fixed;left:12px;top:50%;transform:translateY(-50%);z-index:20;max-width:44vw}
+.ar-place button{background:rgba(13,126,81,.96);border:1px solid #a0f9c9;color:#fff;box-shadow:0 6px 22px #0007;padding:11px 14px;font-size:12px}
+@media (orientation:portrait) { .ar-place{top:32%;left:50%;transform:translateX(-50%);max-width:85vw} }
+@media (orientation:landscape) and (max-height:650px) {.ar-place{left:9px;top:62%;transform:translateY(-50%)} .ar-place button{padding:8px 10px;min-height:36px}}
