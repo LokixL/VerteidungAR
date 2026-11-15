@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#101c2b" />
+  <meta name="description" content="RIPLEY – interaktive User Analysis und vollständige User Story Map für die Masterverteidigung." />
+  <title>RIPLEY · User Analysis & Story Map</title>
+  <link rel="stylesheet" href="./style.css" />
+  <script type="importmap">
+    {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}
+  </script>
+</head>
+<body>
+  <div id="app">
+    <header class="app-header">
+      <a class="brand" href="../" aria-label="Zur RIPLEY-Startseite"><span class="brand-symbol">R</span><span><strong>RIPLEY</strong><small>USER-CENTERED DESIGN</small></span></a>
+      <nav class="screen-nav" aria-label="Präsentationsansichten">
+        <button class="nav-tab active" data-view="persona" aria-current="page"><span>01</span> User Analysis</button>
+        <button class="nav-tab" data-view="map"><span>02</span> User Story Map</button>
+      </nav>
+      <button class="icon-button" id="fullscreen" type="button" title="Vollbildmodus" aria-label="Vollbildmodus">⛶</button>
+    </header>
+
+    <main>
+      <section id="screen-persona" class="screen" aria-label="User Analysis und Einsatzbedingungen">
+        <div class="scenario-layout">
+          <div class="stage-panel">
+            <div id="three-stage" class="three-stage" aria-label="Dreidimensionale, schematische Feuerwehr-Persona">
+              <div class="fallback-figure" id="fallback-figure" aria-hidden="true">
+                <svg viewBox="0 0 250 380" role="presentation" xmlns="http://www.w3.org/2000/svg">
+                  <defs><linearGradient id="coat-grad" x1="0" x2="1"><stop stop-color="#30475a"/><stop offset="1" stop-color="#182b38"/></linearGradient><linearGradient id="helmet-grad" x1="0" x2="1"><stop stop-color="#e8c952"/><stop offset="1" stop-color="#b28b29"/></linearGradient></defs>
+                  <ellipse cx="125" cy="353" rx="105" ry="19" fill="#68b8b6" opacity=".12"/>
+                  <path d="M89 180h29v105H78l7-90ZM135 180h29l9 105h-40Z" fill="#182937" stroke="#668593" stroke-width="3"/>
+                  <path d="M77 278h40v53H72v-27ZM136 278h41l5 53h-46Z" fill="#243c4a" stroke="#6d8f94" stroke-width="3"/>
+                  <path d="M69 330h48v15H62v-9ZM136 330h50l3 15h-53Z" fill="#101b25"/>
+                  <rect x="91" y="90" width="71" height="132" rx="25" fill="url(#coat-grad)" stroke="#769dab" stroke-width="3"/>
+                  <rect x="78" y="141" width="98" height="16" rx="4" fill="#f4d670"/><rect x="78" y="148" width="98" height="5" fill="#e7f4da"/>
+                  <path d="M92 96Q75 93 60 127l-13 82 28 8 30-79M159 95q24-5 35 30l16 86-29 6-28-84" fill="url(#coat-grad)" stroke="#6e8997" stroke-width="3"/>
+                  <path d="M48 192l30 9-4 15-32-7ZM178 202l31-9 6 17-34 8Z" fill="#d2b14f"/>
+                  <rect x="101" y="42" width="50" height="61" rx="21" fill="#233b4d" stroke="#8ab2bc" stroke-width="3"/>
+                  <path d="M89 63q-5-47 36-49 44 0 45 49Z" fill="url(#helmet-grad)" stroke="#fbdf76" stroke-width="3"/>
+                  <rect x="82" y="58" width="89" height="12" rx="6" fill="#d5b64e"/>
+                  <path d="M98 72h55v14q-27 20-55-2Z" fill="#7ce4f4" opacity=".45"/>
+                  <rect x="109" y="83" width="31" height="20" rx="9" fill="#3a5361" stroke="#c5e3dc" stroke-width="2"/>
+                  <path d="M110 99Q91 112 95 134" stroke="#64899c" stroke-width="7" fill="none"/>
+                  <rect x="117" y="110" width="16" height="40" rx="5" fill="#d4dce0" opacity=".2"/>
+                </svg>
+              </div>
+            </div>
+            <div class="stage-top">
+              <span class="eyebrow">CHAPTER 05 · USER ANALYSIS</span>
+              <div class="stage-title">The firefighter <em>at the center.</em></div>
+              <div class="stage-subtitle">Eight operational constraints · One representative persona</div>
+            </div>
+            <div class="web-overlay" id="web-overlay" aria-label="Spinnennetz der acht Belastungsfaktoren">
+              <svg class="web-lines" viewBox="0 0 1000 700" preserveAspectRatio="none" aria-hidden="true">
+                <polygon points="500,75 820,155 925,350 805,560 500,638 190,560 75,350 180,155" fill="rgba(96,196,194,.025)" stroke="rgba(103,188,208,.24)" stroke-width="1.4" stroke-dasharray="7 9"/>
+                <polygon points="500,175 735,220 800,350 710,480 500,535 290,480 200,350 265,220" fill="none" stroke="rgba(103,188,208,.17)" stroke-width="1.2" stroke-dasharray="4 8"/>
+                <g stroke="rgba(103,188,208,.20)" stroke-width="1.5" stroke-dasharray="5 9">
+                  <line x1="500" y1="350" x2="500" y2="75"/><line x1="500" y1="350" x2="820" y2="155"/><line x1="500" y1="350" x2="925" y2="350"/><line x1="500" y1="350" x2="805" y2="560"/><line x1="500" y1="350" x2="500" y2="638"/><line x1="500" y1="350" x2="190" y2="560"/><line x1="500" y1="350" x2="75" y2="350"/><line x1="500" y1="350" x2="180" y2="155"/>
+                </g>
+                <line id="highlight-ray" x1="500" y1="350" x2="500" y2="75" stroke="#8ef6d0" stroke-width="3.2" stroke-linecap="round"/>
+              </svg>
+              <div id="web-nodes" class="web-nodes"></div>
+            </div>
+            <div class="stage-foot">
+              <span class="live-dot"></span><span>REPRESENTATIVE PERSONA · NOT A REAL INCIDENT</span>
+            </div>
+          </div>
+          <aside class="persona-panel">
+            <div class="section-index">01 / USER ANALYSIS <span>CHAPTER 5</span></div>
+            <h1>Operational <span>Constraints</span></h1>
+            <p class="lede">Die Einsatzrealität bestimmt die Anforderungen an ein tragbares akustisches Branddetektionssystem.</p>
+            <div class="persona-identity"><span class="identity-avatar">JP</span><div><strong>Jan Petersen</strong><small>32 years · Representative firefighter persona (Fig. 22)</small></div></div>
+            <div class="constraint-pills" id="constraint-pills" aria-label="Belastungsfaktoren auswählen"></div>
+            <div class="detail-card" id="constraint-detail" aria-live="polite">
+              <div class="detail-number"><span id="constraint-index">01 / 08</span><span id="constraint-category">OPERATIONAL CONSTRAINT</span></div>
+              <h2 id="constraint-title">Low Visibility</h2>
+              <p id="constraint-explanation"></p>
+              <div class="implication"><span>DESIGN IMPLICATION</span><p id="constraint-implication"></p></div>
+              <div class="linked-area">USER STORY MAP <strong id="constraint-area">Deployment</strong></div>
+            </div>
+            <div class="scenario-controls">
+              <button type="button" id="previous-constraint" title="Vorherige Belastung">← Zurück</button>
+              <button type="button" class="primary" id="next-constraint">Nächste →</button>
+              <button type="button" id="play-constraints">▶ Auto</button>
+            </div>
+            <details class="model-options">
+              <summary>3D-Modell · Größe & Drehung</summary>
+              <div><label for="model-size">Größe <output id="size-value">100 %</output></label><input id="model-size" type="range" min="55" max="180" step="5" value="100" /></div>
+              <div><label for="model-rotate">Drehung <output id="rotation-value">0°</output></label><input id="model-rotate" type="range" min="0" max="360" step="5" value="0" /></div>
+            </details>
+            <div class="presentation-note"><strong>Use case</strong> · Bei der Lagefeststellung erscheint eine Situation zunächst unkritisch. RIPLEY soll perspektivisch zusätzliche akustische Hinweise liefern – nicht selbst taktische Entscheidungen treffen.</div>
+            <div class="panel-bottom"><button id="to-map" type="button" class="to-map">Explore the User Story Map <span>↗</span></button></div>
+          </aside>
+        </div>
+      </section>
+
+      <section id="screen-map" class="screen" hidden aria-label="Vollständige User Story Map">
+        <div class="map-intro">
+          <div><span class="eyebrow">CHAPTER 06.8 · TABLE 7</span><h1>User Story <span>Mapping.</span></h1>
+            <p>Die vollständige Map aus deiner Masterarbeit: neun Funktionsbereiche, jeweils <b>Task</b>, <b>First</b> und <b>Second</b>. Keine Inhalte gekürzt.</p></div>
+          <div class="map-legend"><span><i class="legend-task"></i>Tasks</span><span><i class="legend-first"></i>First priority</span><span><i class="legend-second"></i>Second priority</span></div>
+        </div>
+        <div class="map-toolbar">
+          <div class="toolbar-left"><span class="toolbar-label">ANSICHT</span>
+            <button class="map-mode active" data-mode="all">Alle</button><button class="map-mode" data-mode="tasks">Tasks</button><button class="map-mode" data-mode="first">First</button><button class="map-mode" data-mode="second">Second</button>
+            <button id="overview-toggle" class="original-toggle" type="button">⊞ Gesamtansicht</button>
+            <button id="original-toggle" class="original-toggle" type="button">Originaltabelle</button>
+          </div>
+          <div class="zoom-controls" aria-label="Zoom">
+            <button id="zoom-out" aria-label="Verkleinern">−</button><output id="zoom-value">100 %</output><button id="zoom-in" aria-label="Vergrößern">+</button>
+          </div>
+        </div>
+        <div class="area-picker" id="area-picker" aria-label="Funktionsbereich auswählen"></div>
+        <div class="map-body">
+          <div id="board-viewport" class="board-viewport" tabindex="0" aria-label="Vollständiges User Story Mapping; horizontal scrollen, um alle neun Spalten zu sehen">
+            <div class="board" id="board"></div>
+            <div id="source-figure" class="source-figure" hidden><img src="./table7-original.png" alt="Originale Tabelle 7 der Masterarbeit mit allen neun Funktionsbereichen und den Zeilen Task, First, Second" /></div>
+          </div>
+          <aside class="map-inspector" id="map-inspector" aria-live="polite">
+            <div class="inspector-kicker">SELECTED FUNCTIONAL AREA <span id="inspector-position">01 / 09</span></div>
+            <h2 id="inspector-title">User Preparation</h2>
+            <div class="inspector-section"><span>USER NEED → IMPLEMENTATION</span><p id="inspector-need"></p><div class="connector-arrow">↓</div><p class="realization" id="inspector-realization"></p></div>
+            <div class="caution"><span>DEVELOPMENT STATUS</span><p id="inspector-note"></p></div>
+            <div class="inspector-nav"><button id="inspector-previous" aria-label="Vorheriger Bereich">←</button><button id="inspector-next">Nächster Bereich →</button></div>
+          </aside>
+        </div>
+        <div class="map-footer"><span>Source: Masterthesis, Table 7 · Original wording preserved.</span><strong>FIRST / SECOND = DEVELOPMENT PRIORITIES, NOT IMPLEMENTATION STATUS.</strong></div>
+      </section>
+    </main>
+    <div id="ar-controls"><button id="ar-prev" type="button" hidden>← Belastung</button><button id="ar-next" type="button" hidden>Nächste →</button><button id="ar-place" type="button" hidden>◎ Hier platzieren</button><button id="ar-replace" type="button" hidden>↺ Neu platzieren</button></div>
+    <div id="ar-button-slot"></div>
+  </div>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
