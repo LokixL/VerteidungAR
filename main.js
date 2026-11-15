@@ -13,44 +13,63 @@ app.innerHTML = `
       <div id="status" role="status" aria-live="polite">3D-Vorschau bereit</div>
     </header>
     <div class="grow"></div>
-    <section class="panel" id="controls-panel">
-      <div class="menu-toggle-row"><button id="menu-toggle" class="menu-toggle" type="button" aria-controls="controls-panel" aria-expanded="true">▾ Menü einklappen</button></div>
-      <div class="panel-head"><div><span class="eyebrow">LIVING ROOM SCENARIO</span><h1 id="mode-title">Wohnzimmer</h1></div><button id="reset" class="reset" type="button">↺ Reset</button></div>
-      <p class="description" id="mode-description">Ausgangssituation: Möbel und elektrische Steckdosenleiste.</p>
-      <div class="button-grid" id="mode-buttons"></div>
-      <div class="settings-grid">
-        <div class="setting">
-          <label for="scale-control">Größe <strong id="scale-value">100 %</strong></label>
-          <div class="scale-row">
-            <button id="scale-minus" class="stepper" type="button" aria-label="Verkleinern">−</button>
-            <input id="scale-control" type="range" min="30" max="250" step="5" value="100" />
-            <button id="scale-plus" class="stepper" type="button" aria-label="Vergrößern">+</button>
-          </div>
-        </div>
-        <div class="setting view-control">
-          <span class="view-heading">Ansicht</span>
+    <section class="panel accordion-panel" id="controls-panel" aria-label="AR-Steuerung">
+      <details class="control-menu" id="menu-view">
+        <summary><span>◉ Ansicht</span><span class="menu-current" id="view-current">Normal</span><span class="menu-arrow">⌄</span></summary>
+        <div class="menu-content">
           <div class="view-switch" role="group" aria-label="Darstellungsmodus">
             <button id="view-normal" class="view-button active" type="button" aria-pressed="true">Normal</button>
-            <button id="view-thermal" class="view-button" type="button" aria-pressed="false">Temperatur</button>
+            <button id="view-thermal" class="view-button" type="button" aria-pressed="false">Thermal</button>
+          </div>
+          <div id="thermal-info" class="thermal-info" hidden>
+            <div class="thermal-info-title">Thermal View · schematische Falschfarben</div>
+            <div class="thermal-gradient"></div>
+            <div class="thermal-ticks"><span>kühl</span><span>warm</span><span>heiß</span></div>
+            <p id="thermal-explanation" class="thermal-explanation">Illustrative Wärmeverteilung zum ausgewählten Mechanismus.</p>
           </div>
         </div>
-      </div>
-      <div class="rotation-setting">
-        <label for="rotation-control">Wohnzimmer drehen <strong id="rotation-value">0°</strong></label>
-        <div class="rotation-row">
-          <button id="rotate-left" class="stepper" type="button" aria-label="15 Grad nach links drehen">↶</button>
-          <input id="rotation-control" type="range" min="0" max="360" step="5" value="0" aria-label="Wohnzimmer um die senkrechte Achse drehen" />
-          <button id="rotate-right" class="stepper" type="button" aria-label="15 Grad nach rechts drehen">↷</button>
+      </details>
+      <details class="control-menu" id="menu-scene">
+        <summary><span>♨ Szenario</span><span class="menu-current" id="scene-current">Wohnzimmer</span><span class="menu-arrow">⌄</span></summary>
+        <div class="menu-content">
+          <div class="button-grid" id="mode-buttons"></div>
         </div>
+      </details>
+      <details class="control-menu" id="menu-transform">
+        <summary><span>⤢ Modellsteuerung</span><span class="menu-current">Größe · Drehung</span><span class="menu-arrow">⌄</span></summary>
+        <div class="menu-content">
+          <div class="setting">
+            <label for="scale-control">Größe <strong id="scale-value">100 %</strong></label>
+            <div class="scale-row">
+              <button id="scale-minus" class="stepper" type="button" aria-label="Verkleinern">−</button>
+              <input id="scale-control" type="range" min="30" max="250" step="5" value="100" />
+              <button id="scale-plus" class="stepper" type="button" aria-label="Vergrößern">+</button>
+            </div>
+          </div>
+          <div class="rotation-setting">
+            <label for="rotation-control">Wohnzimmer drehen <strong id="rotation-value">0°</strong></label>
+            <div class="rotation-row">
+              <button id="rotate-left" class="stepper" type="button" aria-label="15 Grad nach links drehen">↶</button>
+              <input id="rotation-control" type="range" min="0" max="360" step="5" value="0" aria-label="Wohnzimmer um die senkrechte Achse drehen" />
+              <button id="rotate-right" class="stepper" type="button" aria-label="15 Grad nach rechts drehen">↷</button>
+            </div>
+          </div>
+          <p class="hint" id="hint">Android: START AR drücken, Tisch anvisieren und antippen. Im AR-Modus bleibt das Modell nach dem Platzieren stehen.</p>
+        </div>
+      </details>
+      <div class="scenario-feedback" id="scenario-feedback" hidden>
+        <div class="scenario-feedback-heading">
+          <strong id="mode-title">Wohnzimmer</strong>
+          <button id="close-description" type="button" aria-label="Beschreibung schließen" title="Beschreibung schließen">×</button>
+        </div>
+        <p class="description" id="mode-description">Ausgangssituation: Möbel und elektrische Steckdosenleiste.</p>
       </div>
-      <div id="thermal-info" class="thermal-info" hidden>
-        <div class="thermal-info-title">Thermal View · schematische Falschfarben</div>
-        <div class="thermal-gradient"></div>
-        <div class="thermal-ticks"><span>kühl</span><span>warm</span><span>heiß</span></div>
-        <p id="thermal-explanation" class="thermal-explanation">Keine Messwerte: Die Wärmeverteilung illustriert den ausgewählten Mechanismus.</p>
-      </div>
-      <p class="hint" id="hint">Desktop: Modell mit der Maus drehen. Android: START AR drücken, Tisch anvisieren und einmal ins Kamerabild tippen.</p>
+      <div class="quick-actions"><button id="reset" class="reset" type="button">↺ Reset</button></div>
     </section>
+    <div id="ar-place-actions" aria-live="polite">
+      <button id="place-now" type="button" hidden>◎ Wohnzimmer hier platzieren</button>
+      <button id="place-again" type="button" hidden>↺ Neu platzieren</button>
+    </div>
     <div id="ar-launch"></div>
   </div>`;
 
@@ -58,21 +77,21 @@ const UI = {
   status: document.querySelector('#status'),
   title: document.querySelector('#mode-title'),
   description: document.querySelector('#mode-description'),
+  feedback: document.querySelector('#scenario-feedback'),
   buttons: document.querySelector('#mode-buttons'),
   hint: document.querySelector('#hint'),
   overlay: document.querySelector('#overlay')
 };
 const setStatus = (message) => { UI.status.textContent = message; };
 
-// Collapse the controls without stopping AR or changing the current demonstration.
-const controlsPanel = document.querySelector('#controls-panel');
-const menuToggle = document.querySelector('#menu-toggle');
-menuToggle.addEventListener('click', (event) => {
-  event.stopPropagation();
-  const collapsed = controlsPanel.classList.toggle('is-collapsed');
-  menuToggle.setAttribute('aria-expanded', String(!collapsed));
-  menuToggle.textContent = collapsed ? '☰ Menü öffnen' : '▾ Menü einklappen';
-});
+// Three compact accordion menus. Opening one closes the others.
+// This changes UI only; the AR hit-test, reticle and placement functions are untouched.
+const menus=[...document.querySelectorAll('#controls-panel > details.control-menu')];
+for (const menu of menus) {
+  menu.addEventListener('toggle',()=>{
+    if(menu.open)for(const other of menus)if(other!==menu)other.open=false;
+  });
+}
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color('#172333');
@@ -336,6 +355,7 @@ function setView(view){
     btn.setAttribute('aria-pressed',String(currentView===v));
   }
   updateThermalView();
+  document.querySelector('#view-current').textContent=currentView==='thermal'?'Thermal':'Normal';
 }
 document.querySelector('#view-normal').addEventListener('click',()=>setView('normal'));
 document.querySelector('#view-thermal').addEventListener('click',()=>setView('thermal'));
@@ -416,14 +436,18 @@ function setState(state){
   thermalState=state;
   updateThermalView(); // Thermal is optional; effect visibility remains unchanged
   UI.title.textContent=states[state].label;
+  document.querySelector('#scene-current').textContent=states[state].label;
   UI.description.textContent=states[state].description;
+  UI.feedback.hidden=false;
   for(const btn of UI.buttons.children)btn.classList.toggle('active',btn.dataset.mode===state);
 }
 setState('room');
+UI.feedback.hidden=true; // Initial UI stays compact until a scene is selected.
+document.querySelector('#close-description').addEventListener('click', e=>{e.stopPropagation();UI.feedback.hidden=true;});
 
 document.querySelector('#reset').addEventListener('click',e=>{
-  e.stopPropagation();setState('room');setView('normal');setModelScale(1);setModelRotation(0);
-  if(renderer.xr.isPresenting){ placed=false;placementRoot.visible=false;setStatus('Erneut eine Tischfläche anvisieren und tippen'); }
+  e.stopPropagation();setState('room');UI.feedback.hidden=true;setView('normal');setModelScale(1);setModelRotation(0);
+  if(renderer.xr.isPresenting){ resetPlacement(); }
   else { placementRoot.position.set(0,0,0);placementRoot.quaternion.identity();setStatus('Wohnzimmer zurückgesetzt'); }
 });
 
@@ -455,11 +479,27 @@ fetch(modelUrl,{method:'HEAD'}).then(response=>{
 // WebXR table placement via hit-test; AR stays optional so desktop preview works.
 const reticle=new THREE.Mesh(
   new THREE.RingGeometry(0.065,0.085,40).rotateX(-Math.PI/2),
-  new THREE.MeshBasicMaterial({color:'#5cf1aa',side:THREE.DoubleSide})
+  new THREE.MeshBasicMaterial({color:'#21ff8a',side:THREE.DoubleSide,depthTest:false,depthWrite:false})
 );
-reticle.matrixAutoUpdate=false;reticle.visible=false;scene.add(reticle);
+reticle.matrixAutoUpdate=false;reticle.visible=false;reticle.renderOrder=999;scene.add(reticle);
 let placed=false;
+let lastHitResult=null;
 let hitTestSource=null;
+const placeNowButton=document.getElementById('place-now');
+const placeAgainButton=document.getElementById('place-again');
+function showPlacementControls(){
+  const inAR=renderer.xr.isPresenting;
+  placeNowButton.hidden=!inAR || placed || !reticle.visible;
+  placeAgainButton.hidden=!inAR || !placed;
+}
+function resetPlacement(){
+  placed=false;
+  reticle.visible=false;
+  placementRoot.visible=false;
+  showPlacementControls();
+  setStatus('AR aktiv · Tisch langsam abscannen, bis der grüne Kreis erscheint');
+}
+
 let requestingHitTest=false;
 const xrController=renderer.xr.getController(0);
 scene.add(xrController);
@@ -469,13 +509,16 @@ function place(){
   placementRoot.quaternion.setFromRotationMatrix(reticle.matrix);
   placementRoot.visible=true;
   placed=true;reticle.visible=false;
-  setStatus('Wohnzimmer platziert');
+  setStatus('Wohnzimmer fixiert · Handy bewegen, um es von allen Seiten anzusehen');
+  showPlacementControls();
   UI.hint.textContent='Effekt auswählen oder Reset drücken, um neu zu platzieren.';
 }
 xrController.addEventListener('select',place);
+placeNowButton.addEventListener('click',e=>{e.stopPropagation();place();});
+placeAgainButton.addEventListener('click',e=>{e.stopPropagation();resetPlacement();});
 // Prevent UI button presses from triggering placement in immersive AR.
 UI.overlay.addEventListener('beforexrselect',e=>{
-  if(e.target.closest('button, .panel, #ar-launch'))e.preventDefault();
+  if(e.target.closest('button, .panel, #ar-launch, #ar-place-actions'))e.preventDefault();
 });
 const arButton=ARButton.createButton(renderer,{
   requiredFeatures:['hit-test'],
@@ -486,6 +529,7 @@ document.querySelector('#ar-launch').appendChild(arButton);
 renderer.xr.addEventListener('sessionstart',()=>{
   document.body.classList.add('in-xr');scene.background=null;
   placementRoot.visible=false;placed=false;reticle.visible=false;orbit.enabled=false;
+  showPlacementControls();
   const session=renderer.xr.getSession();
   if(!session?.domOverlayState){
     setStatus('DOM Overlay nicht verfügbar – Buttons eventuell nicht im AR-Modus sichtbar');
@@ -495,6 +539,7 @@ renderer.xr.addEventListener('sessionend',()=>{
   hitTestSource?.cancel();hitTestSource=null;requestingHitTest=false;
   document.body.classList.remove('in-xr');
   placementRoot.visible=true;placed=false;reticle.visible=false;orbit.enabled=true;
+  showPlacementControls();
   placementRoot.position.set(0,0,0);placementRoot.quaternion.identity();
   scene.background=new THREE.Color('#172333');setStatus('3D-Vorschau bereit');
 });
@@ -527,6 +572,7 @@ renderer.setAnimationLoop((_time,frame)=>{
         else reticle.visible=false;
       }else reticle.visible=false;
     }
+    showPlacementControls();
   }
   for(const child of fireFx.children){
     if(child.userData.smokeIndex!==undefined){

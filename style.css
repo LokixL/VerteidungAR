@@ -95,3 +95,70 @@ body.in-xr #ar-launch{display:none}
 .thermal-ticks{display:flex;justify-content:space-between;color:#b9c9df;font-size:10px;margin-top:3px}
 .thermal-explanation{margin:8px 0 0;color:#d7e0ed;font-size:11px;line-height:1.4}
 @media(orientation:landscape) and (max-height:650px){.thermal-info{padding:7px;margin-top:6px}.thermal-explanation{font-size:10px}}
+
+/* V9: Placement controls independent of the collapsible menu */
+#ar-place-actions{display:none;pointer-events:auto;align-self:center;gap:8px;margin-top:8px}
+body.in-xr #ar-place-actions{display:flex}
+#ar-place-actions button{background:#138858;border:1px solid #70efae;color:white;font-size:12px;min-height:38px;padding:8px 13px;border-radius:12px}
+#ar-place-actions button[hidden]{display:none!important}
+@media(orientation:landscape) and (max-height:650px){#ar-place-actions{align-self:flex-end;margin-top:5px}#ar-place-actions button{font-size:11px;min-height:30px;padding:5px 10px}}
+
+
+/* V10 – Three compact menus; the AR launch/placement buttons stay independent. */
+#controls-panel.accordion-panel {
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  width:min(100%,390px);
+  max-height:min(66dvh,520px);
+  overflow-y:auto;
+  padding:5px;
+  margin-left:auto;
+  margin-right:0;
+  background:rgba(10,22,33,.40);
+  overscroll-behavior:contain;
+  scrollbar-width:thin;
+}
+.control-menu {min-width:0;flex:none;background:rgba(12,26,39,.96);border:1px solid rgba(165,216,230,.20);border-radius:12px;overflow:hidden;}
+.control-menu summary {display:flex;align-items:center;gap:8px;padding:9px 12px;min-height:40px;cursor:pointer;list-style:none;font-size:13px;font-weight:700;touch-action:manipulation;}
+.control-menu summary::-webkit-details-marker{display:none}
+.control-menu summary:focus-visible{outline:2px solid #8ffdc2;outline-offset:-3px}
+.control-menu[open] summary{background:rgba(30,77,69,.56);border-bottom:1px solid rgba(255,255,255,.13)}
+.menu-current {margin-left:auto;color:#9fddc9;font-size:11px;font-weight:500;min-width:0;max-width:43%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.menu-arrow{font-size:18px;line-height:1;transform:rotate(0deg);transition:transform .15s ease}
+.control-menu[open] .menu-arrow{transform:rotate(180deg)}
+.menu-content{padding:10px;}
+.control-menu .button-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;}
+.control-menu .button-grid button{font-size:12px;min-height:39px;padding:7px 3px;}
+.control-menu .setting{margin:0 0 10px;}
+.control-menu .rotation-setting{margin-top:8px;}
+.control-menu .description{min-height:0;margin:4px 0 9px;}
+.control-menu .hint{margin-top:10px;}
+#ar-launch{flex:none;}
+@media(max-width:440px){
+  #controls-panel.accordion-panel{width:min(100%,345px);max-height:55dvh;}
+  .control-menu .button-grid{grid-template-columns:repeat(3,minmax(0,1fr));}
+}
+@media (orientation:landscape) and (max-height:650px){
+  #controls-panel.accordion-panel{width:min(340px,48vw);max-height:calc(100dvh - 58px);margin:0 0 0 auto;padding:4px;gap:4px;}
+  .control-menu summary{min-height:34px;padding:6px 9px;font-size:12px;}
+  .menu-current{font-size:10px;}
+  .menu-content{padding:7px;}
+  .control-menu .button-grid button{min-height:33px;font-size:11px;}
+}
+
+
+/* V11 – Persistent reset and an optional, dismissible explanation. */
+.quick-actions {display:flex;justify-content:flex-end;padding:1px 2px 2px;}
+.quick-actions .reset {min-height:33px;padding:5px 12px;font-size:12px;background:#1b4650;border-color:#427983;}
+.scenario-feedback {padding:9px 11px;border-radius:10px;border:1px solid rgba(110,221,178,.35);background:rgba(14,39,51,.95);}
+.scenario-feedback[hidden] {display:none!important;}
+.scenario-feedback-heading {display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.scenario-feedback-heading strong {font-size:12px;color:#80edbb;}
+.scenario-feedback-heading button {min-height:25px;min-width:27px;padding:0 5px;border:none;background:transparent;color:#d6e6ec;font-size:21px;line-height:1;}
+.scenario-feedback .description {font-size:11px;line-height:1.4;margin:4px 0 0;min-height:0;}
+@media(orientation:landscape) and (max-height:650px){
+  .scenario-feedback{padding:6px 9px;}
+  .scenario-feedback .description{font-size:10px;}
+  .quick-actions .reset{min-height:29px;padding:3px 9px;}
+}
