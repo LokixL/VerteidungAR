@@ -1,15 +1,18 @@
-RIPLEY WebXR – ohne Node.js
+RIPLEY WebXR V3 + Landscape + Drehregler
 
-1) Den Ordner Ripley_WebXR_Live_Server in VS Code öffnen.
-2) index.html öffnen, unten rechts "Go Live" (Live Server).
-3) Im Browser erscheint die 3D-Vorschau und die Buttons.
-4) Für Android-AR: Alle Dateien dieses Ordners in ein öffentliches GitHub-Repository hochladen, Settings -> Pages -> Deploy from a branch -> main / (root) wählen.
-5) Die HTTPS-Adresse in Android Chrome öffnen. START AR -> Tisch scannen -> tippen.
+OHNE Node.js: index.html mit VS Code Live Server öffnen.
+Für echte AR am Handy: main.js und style.css in dein GitHub-Pages-Repository kopieren, danach Commit + Push.
 
-Benötigt Internet, weil Three.js über jsDelivr CDN geladen wird.
-Keine Installation von Node.js/npm/Vite notwendig.
-Der QR-Code kann später auf die GitHub-Pages-URL verweisen.
-Optionale Modelle: models/living-room.glb.
-Dies ist eine schematische Visualisierung, keine physikalisch kalibrierte Brandsimulation.
-WebXR AR setzt Android Chrome und ein geeignetes ARCore-Gerät voraus.
-WebXR-Tischplatzierung und DOM-Overlay-Unterstützung sind geräteabhängig.
+Neue Funktionen gegenüber V3:
+- Querformat: kompakte, rechts platzierte und scrollbar gehaltene Steuerung.
+- Wohnzimmer um Y-Achse drehen: Slider 0–360° und ↶/↷ je 15°.
+- Das Handy darf gedreht/gekippt werden; Three.js passt die Darstellung bei Fenstergrößenänderungen an.
+- Der Drehregler rotiert das 3D-Modell, NICHT den WebXR-Tischanker.
+
+Unverändert: Normal-/Temperaturansicht; drei illustrative Temperaturzonen; Modellskalierung; Fire/Radiation/Convection/Conduction; Reset; optionales GLB.
+
+Achtung: Manche Android-Browser/WebXR-Sitzungen sperren die Bildschirmausrichtung. Drehe das Handy ggf. VOR dem Start von AR ins Querformat und aktiviere Android Auto-Rotate.
+
+Die Temperaturen sind ausschließlich illustrative Beispielwerte, keine Messung oder Brandsimulation.
+
+NEU: Menue einklappen/oeffnen ueber Schaltflaeche direkt im Bedienfeld. Funktioniert auch in AR, falls DOM Overlay unterstuetzt wird. AR-Button bleibt separat erreichbar.

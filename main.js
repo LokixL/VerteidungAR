@@ -14,9 +14,45 @@ app.innerHTML = `
     </header>
     <div class="grow"></div>
     <section class="panel" id="controls-panel">
+      <div class="menu-toggle-row"><button id="menu-toggle" class="menu-toggle" type="button" aria-controls="controls-panel" aria-expanded="true">▾ Menü einklappen</button></div>
       <div class="panel-head"><div><span class="eyebrow">LIVING ROOM SCENARIO</span><h1 id="mode-title">Wohnzimmer</h1></div><button id="reset" class="reset" type="button">↺ Reset</button></div>
       <p class="description" id="mode-description">Ausgangssituation: Möbel und elektrische Steckdosenleiste.</p>
       <div class="button-grid" id="mode-buttons"></div>
+      <div class="settings-grid">
+        <div class="setting">
+          <label for="scale-control">Größe <strong id="scale-value">100 %</strong></label>
+          <div class="scale-row">
+            <button id="scale-minus" class="stepper" type="button" aria-label="Verkleinern">−</button>
+            <input id="scale-control" type="range" min="30" max="250" step="5" value="100" />
+            <button id="scale-plus" class="stepper" type="button" aria-label="Vergrößern">+</button>
+          </div>
+        </div>
+        <div class="setting view-control">
+          <span class="view-heading">Ansicht</span>
+          <div class="view-switch" role="group" aria-label="Darstellungsmodus">
+            <button id="view-normal" class="view-button active" type="button" aria-pressed="true">Normal</button>
+            <button id="view-thermal" class="view-button" type="button" aria-pressed="false">Temperatur</button>
+          </div>
+        </div>
+      </div>
+      <div class="rotation-setting">
+        <label for="rotation-control">Wohnzimmer drehen <strong id="rotation-value">0°</strong></label>
+        <div class="rotation-row">
+          <button id="rotate-left" class="stepper" type="button" aria-label="15 Grad nach links drehen">↶</button>
+          <input id="rotation-control" type="range" min="0" max="360" step="5" value="0" aria-label="Wohnzimmer um die senkrechte Achse drehen" />
+          <button id="rotate-right" class="stepper" type="button" aria-label="15 Grad nach rechts drehen">↷</button>
+        </div>
+      </div>
+      <div class="temperature-panel" id="temperature-panel" hidden>
+        <div class="temperature-heading"><strong>Temperaturübersicht</strong><span>Illustrative Werte</span></div>
+        <label class="temp-field" for="temp-source"><span><i class="temp-dot source-dot"></i>Brandquelle · Steckdosenleiste</span><strong id="temp-source-value">20 °C</strong></label>
+        <input id="temp-source" type="range" min="20" max="600" step="5" value="20" />
+        <label class="temp-field" for="temp-air"><span><i class="temp-dot air-dot"></i>Heißgase · obere Raumzone</span><strong id="temp-air-value">20 °C</strong></label>
+        <input id="temp-air" type="range" min="20" max="300" step="5" value="20" />
+        <label class="temp-field" for="temp-surface"><span><i class="temp-dot surface-dot"></i>Oberfläche · Sofa</span><strong id="temp-surface-value">20 °C</strong></label>
+        <input id="temp-surface" type="range" min="20" max="300" step="5" value="20" />
+        <p class="small-note">Schematische Temperaturzonen: frei einstellbare Beispielwerte, keine Simulation, Messung oder Vorhersage. Wärmeleitung wird gesondert an der Steckdosenleiste illustriert.</p>
+      </div>
       <p class="hint" id="hint">Desktop: Modell mit der Maus drehen. Android: START AR drücken, Tisch anvisieren und einmal ins Kamerabild tippen.</p>
     </section>
     <div id="ar-launch"></div>
@@ -31,6 +67,16 @@ const UI = {
   overlay: document.querySelector('#overlay')
 };
 const setStatus = (message) => { UI.status.textContent = message; };
+
+// Collapse the controls without stopping AR or changing the current demonstration.
+const controlsPanel = document.querySelector('#controls-panel');
+const menuToggle = document.querySelector('#menu-toggle');
+menuToggle.addEventListener('click', (event) => {
+  event.stopPropagation();
+  const collapsed = controlsPanel.classList.toggle('is-collapsed');
+  menuToggle.setAttribute('aria-expanded', String(!collapsed));
+  menuToggle.textContent = collapsed ? '☰ Menü öffnen' : '▾ Menü einklappen';
+});
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color('#172333');
@@ -60,7 +106,11 @@ const fireFx = new THREE.Group();
 const radiationFx = new THREE.Group();
 const convectionFx = new THREE.Group();
 const conductionFx = new THREE.Group();
-placementRoot.add(roomRoot, fireFx, radiationFx, convectionFx, conductionFx);
+const contentRoot = new THREE.Group();
+placementRoot.add(contentRoot);
+contentRoot.add(roomRoot, fireFx, radiationFx, convectionFx, conductionFx);
+const thermalFx = new THREE.Group();
+contentRoot.add(thermalFx);
 
 const mat = (c, opts={}) => new THREE.MeshStandardMaterial({ color:c, roughness:0.8, ...opts });
 const basic = (c, opacity=1) => new THREE.MeshBasicMaterial({ color:c, transparent:opacity<1, opacity, depthWrite:false, side:THREE.DoubleSide });
@@ -152,6 +202,125 @@ function buildConduction() {
   }
 }
 buildRoom();buildFire();buildRadiation();buildConvection();buildConduction();
+// Visual temperature zones; each is an independent illustrative input.
+// These values do NOT result from a physically calibrated fire model.
+const thermalZones = {
+  source: { position: SOURCE.clone(), radius: 0.037, value: 20, maximum: 600 },
+  air: { position: new THREE.Vector3(0.06, 0.225, -0.06), radius: 0.085, value: 20, maximum: 300 },
+  surface: { position: new THREE.Vector3(-0.155, 0.106, 0.037), radius: 0.057, value: 20, maximum: 300 }
+};
+for (const [name, zone] of Object.entries(thermalZones)) {
+  const mesh = new THREE.Mesh(
+    new THREE.SphereGeometry(zone.radius, 24, 16),
+    new THREE.MeshBasicMaterial({ color: '#4d9edb', transparent: true, opacity: 0.12,
+      blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide })
+  );
+  mesh.position.copy(zone.position);
+  zone.mesh = mesh;
+  thermalFx.add(mesh);
+}
+function zoneColor(value, max) {
+  const ratio = THREE.MathUtils.clamp((value - 20) / (max - 20), 0, 1);
+  return new THREE.Color().setHSL((0.60 - 0.60 * ratio), 0.95, 0.55);
+}
+function setZoneTemp(name, temp) {
+  const zone = thermalZones[name];
+  if (!zone) return;
+  zone.value = THREE.MathUtils.clamp(Number(temp), 20, zone.maximum);
+  document.querySelector(`#temp-${name}`).value = String(zone.value);
+  document.querySelector(`#temp-${name}-value`).textContent = `${zone.value} °C`;
+  zone.mesh.material.color.copy(zoneColor(zone.value, zone.maximum));
+  const intensity = (zone.value - 20) / (zone.maximum - 20);
+  zone.mesh.material.opacity = 0.09 + 0.30 * intensity;
+  zone.mesh.scale.setScalar(0.9 + 0.3 * intensity);
+}
+for (const name of Object.keys(thermalZones)) {
+  document.querySelector(`#temp-${name}`).addEventListener('input', e => {
+    setZoneTemp(name, e.target.value);
+  });
+}
+
+let currentView = 'normal';
+function setView(view) {
+  currentView = view === 'thermal' ? 'thermal' : 'normal';
+  thermalFx.visible = currentView === 'thermal';
+  document.querySelector('#temperature-panel').hidden = currentView !== 'thermal';
+  for (const [id, value] of [['view-normal','normal'], ['view-thermal','thermal']]) {
+    const btn = document.getElementById(id);
+    btn.classList.toggle('active', value === currentView);
+    btn.setAttribute('aria-pressed', String(value === currentView));
+  }
+}
+document.querySelector('#view-normal').addEventListener('click', () => setView('normal'));
+document.querySelector('#view-thermal').addEventListener('click', () => setView('thermal'));
+
+// Preset temperatures are purely illustrative values chosen for communication,
+// and never imply real heating rates or thermodynamic coupling.
+const TEMPERATURE_PRESETS = {
+  room:       { source:20,  air:20,  surface:20 },
+  fire:       { source:200, air:35,  surface:35 },
+  radiation:  { source:240, air:45,  surface:110 },
+  convection: { source:240, air:120, surface:55 },
+  conduction: { source:240, air:40,  surface:40 }
+};
+function setTemperaturePreset(state) {
+  for (const [name, value] of Object.entries(TEMPERATURE_PRESETS[state])) {
+    setZoneTemp(name, value);
+  }
+}
+setTemperaturePreset('room');
+setView('normal');
+
+// Scale the entire demonstration as one unit, keeping the hit-test placement untouched.
+const scaleSlider=document.querySelector('#scale-control');
+let scaleValue=1;
+function setModelScale(scale){
+  scaleValue=THREE.MathUtils.clamp(Number(scale),0.3,2.5);
+  contentRoot.scale.setScalar(scaleValue);
+  scaleSlider.value=Math.round(scaleValue*100);
+  document.querySelector('#scale-value').textContent=`${Math.round(scaleValue*100)} %`;
+}
+setModelScale(1);
+scaleSlider.addEventListener('input',e=>setModelScale(Number(e.target.value)/100));
+document.querySelector('#scale-minus').addEventListener('click',()=>setModelScale(scaleValue-0.1));
+document.querySelector('#scale-plus').addEventListener('click',()=>setModelScale(scaleValue+0.1));
+
+// Rotate only the visual content around the vertical (Y) axis.
+// The WebXR hit-test placement root remains aligned with the real table.
+const rotationSlider = document.querySelector('#rotation-control');
+let modelRotationDegrees = 0;
+function setModelRotation(degrees) {
+  const requestedDegrees = Number(degrees);
+  if (!Number.isFinite(requestedDegrees)) return;
+  // Preserve 360° on the slider; 0° and 360° are equivalent in 3D.
+  modelRotationDegrees = Math.max(0, Math.min(360, requestedDegrees));
+  contentRoot.rotation.y = THREE.MathUtils.degToRad(modelRotationDegrees);
+  rotationSlider.value = String(modelRotationDegrees);
+  document.querySelector('#rotation-value').textContent = `${Math.round(modelRotationDegrees)}°`;
+}
+rotationSlider.addEventListener('input', e => setModelRotation(e.target.value));
+document.querySelector('#rotate-left').addEventListener('click', e => {
+  e.stopPropagation();
+  setModelRotation((modelRotationDegrees - 15 + 360) % 360);
+});
+document.querySelector('#rotate-right').addEventListener('click', e => {
+  e.stopPropagation();
+  setModelRotation((modelRotationDegrees + 15) % 360);
+});
+setModelRotation(0);
+
+// Two-finger pinch zoom is an optional convenience. The slider is the reliable fallback.
+let pinchStartDistance=null,pinchStartScale=1;
+const distance=(a,b)=>Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);
+renderer.domElement.addEventListener('touchstart',e=>{
+  if(e.touches.length===2){pinchStartDistance=distance(e.touches[0],e.touches[1]);pinchStartScale=scaleValue;}
+},{passive:true});
+renderer.domElement.addEventListener('touchmove',e=>{
+  if(e.touches.length===2&&pinchStartDistance>0){
+    e.preventDefault();setModelScale(pinchStartScale*distance(e.touches[0],e.touches[1])/pinchStartDistance);
+  }
+},{passive:false});
+renderer.domElement.addEventListener('touchend',e=>{if(e.touches.length<2)pinchStartDistance=null;},{passive:true});
 
 const states = {
   room:{label:'Wohnzimmer',description:'Ausgangssituation: Sofa, Vorhang und elektrische Steckdosenleiste.'},
@@ -174,6 +343,7 @@ function setState(state){
   radiationFx.visible=state==='radiation';
   convectionFx.visible=state==='convection';
   conductionFx.visible=state==='conduction';
+  setTemperaturePreset(state); // illustrative example for the selected mechanism
   UI.title.textContent=states[state].label;
   UI.description.textContent=states[state].description;
   for(const btn of UI.buttons.children)btn.classList.toggle('active',btn.dataset.mode===state);
@@ -181,7 +351,7 @@ function setState(state){
 setState('room');
 
 document.querySelector('#reset').addEventListener('click',e=>{
-  e.stopPropagation();setState('room');
+  e.stopPropagation();setState('room');setView('normal');setModelScale(1);setModelRotation(0);
   if(renderer.xr.isPresenting){ placed=false;placementRoot.visible=false;setStatus('Erneut eine Tischfläche anvisieren und tippen'); }
   else { placementRoot.position.set(0,0,0);placementRoot.quaternion.identity();setStatus('Wohnzimmer zurückgesetzt'); }
 });
@@ -273,6 +443,12 @@ const clock=new THREE.Clock();
 renderer.setAnimationLoop((_time,frame)=>{
   const dt=Math.min(clock.getDelta(),0.06);
   const t=clock.elapsedTime;
+  const heatIntensity=(thermalZones.source.value-20)/(thermalZones.source.maximum-20);
+  for (const zone of Object.values(thermalZones)) {
+    if (!zone.mesh.visible) continue;
+    const base = 0.09 + 0.30 * (zone.value-20)/(zone.maximum-20);
+    zone.mesh.material.opacity = base * (0.96 + 0.04 * Math.sin(t*2.2));
+  }
   if(renderer.xr.isPresenting && frame && !placed){
     const session=renderer.xr.getSession();requestHitTest(session);
     if(hitTestSource){
@@ -290,9 +466,9 @@ renderer.setAnimationLoop((_time,frame)=>{
       const i=child.userData.smokeIndex,phase=((t*0.26+i/8)%1);
       child.position.set(SOURCE.x+0.018*Math.sin(i*2.7+phase*4), SOURCE.y+0.015+phase*0.19, SOURCE.z+0.013*Math.cos(i*1.7+phase*4));
       child.scale.setScalar(0.55+phase*1.3);
-      child.material.opacity=0.30*(1-phase);
+      child.material.opacity=(0.12+0.36*heatIntensity)*(1-phase);
     }
-    if(child.name==='ember')child.scale.setScalar(0.85+Math.sin(t*8)*0.14);
+    if(child.name==='ember')child.scale.setScalar((0.55+heatIntensity*0.95)*(0.85+Math.sin(t*8)*0.14));
   }
   for(const ring of radiationFx.children){
     if(ring.userData.phase!==undefined){
