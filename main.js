@@ -62,6 +62,7 @@ app.innerHTML = `
       </div>
       <p class="hint" id="hint">Desktop: Modell mit der Maus drehen. Android: START AR drücken, Tisch anvisieren und einmal ins Kamerabild tippen.</p>
     </section>
+    <div id="ar-place" class="ar-place" hidden><button id="place-button" type="button">⌖ Wohnzimmer platzieren</button></div>
     <div id="ar-launch"></div>
   </div>`;
 
@@ -349,11 +350,12 @@ function updateThermalAppearance(){
   thermalUniforms.uMode.value=thermalModeNumbers[currentState];
   applyRoomThermal(thermal);
   thermalPlume.visible=thermal && currentState==='convection';
-  // In Thermal View the false-colour rendering replaces the regular effect graphics.
-  fireFx.visible=!thermal && currentState!=='room';
-  radiationFx.visible=!thermal && currentState==='radiation';
-  convectionFx.visible=!thermal && currentState==='convection';
-  conductionFx.visible=!thermal && currentState==='conduction';
+  // Keep ALL established mechanism visualizations in both Normal and Thermal View.
+  // Thermal View recolours the room, but does not remove the explanatory effects.
+  fireFx.visible=currentState!=='room';
+  radiationFx.visible=currentState==='radiation';
+  convectionFx.visible=currentState==='convection';
+  conductionFx.visible=currentState==='conduction';
   document.querySelector('#thermal-step-label').textContent=`${thermalModeIds.indexOf(currentState)+1} / 5 · ${states[currentState].label}`;
   document.querySelector('#thermal-explanation').textContent=thermalDescriptions[currentState];
   document.querySelector('#thermal-prev').disabled=currentState==='room';
@@ -459,7 +461,7 @@ setState('room');
 
 document.querySelector('#reset').addEventListener('click',e=>{
   e.stopPropagation();setState('room');setView('normal');setModelScale(1);setModelRotation(0);
-  if(renderer.xr.isPresenting){ placed=false;placementRoot.visible=false;setStatus('Erneut eine Tischfläche anvisieren und tippen'); }
+  if(renderer.xr.isPresenting){ placed=false;placementRoot.visible=false;updatePlacementControl();setStatus('Erneut eine Tischfläche anvisieren und tippen'); }
   else { placementRoot.position.set(0,0,0);placementRoot.quaternion.identity();setStatus('Wohnzimmer zurückgesetzt'); }
 });
 
@@ -499,19 +501,25 @@ let hitTestSource=null;
 let requestingHitTest=false;
 const xrController=renderer.xr.getController(0);
 scene.add(xrController);
+const placeControl=document.querySelector('#ar-place');
+const placeButton=document.querySelector('#place-button');
+function updatePlacementControl(){
+  placeControl.hidden=!(renderer.xr.isPresenting && !placed && reticle.visible);
+}
 function place(){
   if(!renderer.xr.isPresenting || placed || !reticle.visible)return;
   placementRoot.position.setFromMatrixPosition(reticle.matrix);
   placementRoot.quaternion.setFromRotationMatrix(reticle.matrix);
   placementRoot.visible=true;
-  placed=true;reticle.visible=false;
+  placed=true;reticle.visible=false;updatePlacementControl();
   setStatus('Wohnzimmer platziert');
   UI.hint.textContent='Effekt auswählen oder Reset drücken, um neu zu platzieren.';
 }
 xrController.addEventListener('select',place);
+placeButton.addEventListener('click',e=>{e.stopPropagation();place();});
 // Prevent UI button presses from triggering placement in immersive AR.
 UI.overlay.addEventListener('beforexrselect',e=>{
-  if(e.target.closest('button, .panel, #ar-launch'))e.preventDefault();
+  if(e.target.closest('button, .panel, #ar-launch, #ar-place'))e.preventDefault();
 });
 const arButton=ARButton.createButton(renderer,{
   requiredFeatures:['hit-test'],
@@ -521,7 +529,7 @@ const arButton=ARButton.createButton(renderer,{
 document.querySelector('#ar-launch').appendChild(arButton);
 renderer.xr.addEventListener('sessionstart',()=>{
   document.body.classList.add('in-xr');scene.background=null;
-  placementRoot.visible=false;placed=false;reticle.visible=false;orbit.enabled=false;
+  placementRoot.visible=false;placed=false;reticle.visible=false;orbit.enabled=false;updatePlacementControl();
   const session=renderer.xr.getSession();
   if(!session?.domOverlayState){
     setStatus('DOM Overlay nicht verfügbar – Buttons eventuell nicht im AR-Modus sichtbar');
@@ -530,7 +538,7 @@ renderer.xr.addEventListener('sessionstart',()=>{
 renderer.xr.addEventListener('sessionend',()=>{
   hitTestSource?.cancel();hitTestSource=null;requestingHitTest=false;
   document.body.classList.remove('in-xr');
-  placementRoot.visible=true;placed=false;reticle.visible=false;orbit.enabled=true;
+  placementRoot.visible=true;placed=false;reticle.visible=false;orbit.enabled=true;updatePlacementControl();
   placementRoot.position.set(0,0,0);placementRoot.quaternion.identity();
   scene.background=new THREE.Color(currentView==='thermal'?'#0c1024':'#172333');setStatus('3D-Vorschau bereit');
 });
@@ -566,6 +574,8 @@ renderer.setAnimationLoop((_time,frame)=>{
       }else reticle.visible=false;
     }
   }
+  // Placement button is visible only while a detected surface is ready.
+  updatePlacementControl();
   for(const child of fireFx.children){
     if(child.userData.smokeIndex!==undefined){
       const i=child.userData.smokeIndex,phase=((t*0.26+i/8)%1);
