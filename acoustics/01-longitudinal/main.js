@@ -21,6 +21,10 @@ app.innerHTML = `
     </header>
     <div class="scene-label" id="scene-label">LUFT · VERDICHTUNG / VERDÜNNUNG</div>
     <div class="spacer"></div>
+    <!-- This toggle remains accessible even when the entire controls panel is hidden. -->
+    <div id="menu-toggle-row">
+      <button id="panel-toggle" type="button" aria-controls="controls-panel" aria-expanded="true">⌄ Menü ausblenden</button>
+    </div>
     <section id="controls-panel" aria-label="Akustik-Demonstration">
       <details class="control-menu" id="menu-medium">
         <summary><span>◈ Medium</span><span class="menu-current" id="medium-current">Luft</span><span class="arrow">⌄</span></summary>
@@ -130,6 +134,23 @@ const setStatus = message => { $('#status').textContent = message; };
 const fmt = (value, places = 0) => value.toLocaleString('de-DE', { maximumFractionDigits: places, minimumFractionDigits: places });
 const wavelengthString = metres => metres < .1 ? `${fmt(metres * 100, 1)} cm` : metres < 1 ? `${fmt(metres * 100, 0)} cm` : `${fmt(metres, metres >= 10 ? 1 : 2)} m`;
 const visualCycles = frequency => ({20: 0.9, 100: 1.55, 1000: 2.95, 20000: 5.3})[frequency];
+
+// The entire control panel can be collapsed without affecting the WebXR
+// placement ring, the AR start button, or the running 3D animation.
+const controlPanel = $('#controls-panel');
+const panelToggle = $('#panel-toggle');
+function setPanelExpanded(expanded) {
+  controlPanel.hidden = !expanded;
+  panelToggle.setAttribute('aria-expanded', String(expanded));
+  panelToggle.textContent = expanded ? '⌄ Menü ausblenden' : '☰ Menü öffnen';
+}
+panelToggle.addEventListener('click', event => {
+  event.stopPropagation();
+  setPanelExpanded(controlPanel.hidden);
+});
+// Leave the existing desktop interface open. On phones, start with the full
+// panel closed so the AR camera has the largest possible viewing area.
+setPanelExpanded(!window.matchMedia('(max-width: 760px), (max-height: 540px)').matches);
 
 for (const menu of document.querySelectorAll('details.control-menu')) {
   menu.addEventListener('toggle', () => {
