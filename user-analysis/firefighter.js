@@ -1,12 +1,11 @@
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
-import {ARButton} from 'three/addons/webxr/ARButton.js';
 
 /**
  * Original procedural, stylized firefighter for an EDUCATIONAL user scenario.
  * The graphic is not a scanned person, certified PPE design or measured heat/smoke field.
  */
-export function createFirefighterScene({stage,launchSlot,overlay,onXRStart,onXREnd}) {
+export function createFirefighterScene({stage}) {
   const scene=new THREE.Scene();
   const background=new THREE.Color('#0e2233'); scene.background=background;
   const camera=new THREE.PerspectiveCamera(49,1,.01,100);
@@ -20,7 +19,6 @@ export function createFirefighterScene({stage,launchSlot,overlay,onXRStart,onXRE
   renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.65));
   renderer.outputColorSpace=THREE.SRGBColorSpace;
   renderer.toneMapping=THREE.ACESFilmicToneMapping;
-  renderer.xr.enabled=true;
   stage.append(renderer.domElement);
   stage.dataset.ready='true';
   const orbit=new OrbitControls(camera,renderer.domElement);
@@ -166,60 +164,15 @@ export function createFirefighterScene({stage,launchSlot,overlay,onXRStart,onXRE
   function setScale(s){modelScale=s;modelRoot.scale.setScalar(s);}
   function setRotation(deg){rotDeg=deg;modelRoot.rotation.y=deg*Math.PI/180;}
 
-  const reticle=new THREE.Mesh(new THREE.RingGeometry(.07,.09,40).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:'#6affac',side:THREE.DoubleSide}));
-  reticle.matrixAutoUpdate=false;reticle.visible=false;scene.add(reticle);
-  let hitTestSource=null,hitTestRequested=false,placed=false;
-  const controller=renderer.xr.getController(0);scene.add(controller);
-  let placeButton=null,replaceButton=null;
-  function updateButtons(){
-    if(!placeButton||!replaceButton)return;
-    const inXR=renderer.xr.isPresenting;
-    placeButton.hidden=!inXR||placed||!reticle.visible;
-    replaceButton.hidden=!inXR||!placed;
-  }
-  function place(){
-    if(!renderer.xr.isPresenting||placed||!reticle.visible)return;
-    placementRoot.position.setFromMatrixPosition(reticle.matrix);
-    placementRoot.quaternion.setFromRotationMatrix(reticle.matrix);
-    placementRoot.scale.setScalar(.65);
-    placementRoot.visible=true;placed=true;reticle.visible=false;updateButtons();
-  }
-  function resetPlacement(){
-    placed=false;placementRoot.visible=false;reticle.visible=false;updateButtons();
-  }
-  controller.addEventListener('select',place);
-  const arButton=ARButton.createButton(renderer,{requiredFeatures:['hit-test'],optionalFeatures:['dom-overlay'],domOverlay:{root:overlay}});
-  arButton.textContent=arButton.textContent==='START AR'?'START AR':arButton.textContent;
-  launchSlot.appendChild(arButton);
-  renderer.xr.addEventListener('sessionstart',()=>{
-    scene.background=null;orbit.enabled=false;
-    placementRoot.visible=false;placed=false;reticle.visible=false;
-    onXRStart?.();updateButtons();
-  });
-  renderer.xr.addEventListener('sessionend',()=>{
-    scene.background=background;orbit.enabled=true;
-    if(hitTestSource){hitTestSource.cancel();hitTestSource=null;}hitTestRequested=false;
-    placementRoot.visible=true;placementRoot.position.set(0,0,0);placementRoot.quaternion.identity();placementRoot.scale.setScalar(1);
-    placed=false;reticle.visible=false;onXREnd?.();updateButtons();
-  });
-  async function requestHitTestSource(session){
-    if(hitTestRequested||hitTestSource)return;
-    hitTestRequested=true;
-    try{
-      const refSpace=await session.requestReferenceSpace('viewer');
-      const source=await session.requestHitTestSource({space:refSpace});
-      if(session===renderer.xr.getSession())hitTestSource=source;else source.cancel();
-    }catch(e){console.warn('AR hit-test unavailable',e);hitTestRequested=false;}
-  }
   let enabled=true,elapsed=0,lastFrame=performance.now();
   function resize(){
     const w=stage.clientWidth||innerWidth,h=stage.clientHeight||innerHeight;
     if(w&&h){renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
   }
   const resizeObserver=new ResizeObserver(resize);resizeObserver.observe(stage);resize();
-  renderer.setAnimationLoop((_,frame)=>{
+  renderer.setAnimationLoop(()=>{
     const now=performance.now(),dt=Math.min((now-lastFrame)/1000,.07);lastFrame=now;elapsed+=dt;
-    if(!renderer.xr.isPresenting&&!enabled)return;
+    if(!enabled)return;
     const active=idToIndex[currentConstraint]??0;
     for(let i=0;i<webNodes.length;i++){
       if(i===active){webNodes[i].scale.setScalar(1.75+.25*Math.sin(elapsed*3));}
@@ -241,24 +194,11 @@ export function createFirefighterScene({stage,launchSlot,overlay,onXRStart,onXRE
       parts.gloveLeft.material.emissive=new THREE.Color('#314a19');
       parts.gloveLeft.material.emissiveIntensity=.6+.28*Math.sin(elapsed*3);
     }else{parts.gloveLeft.material.emissive=new THREE.Color('#000000');}
-    if(!renderer.xr.isPresenting){
-      orbit.update();
-      ringGrid.rotation.y=elapsed*.023;
-    }
-    if(renderer.xr.isPresenting&&frame&&!placed){
-      const session=renderer.xr.getSession();requestHitTestSource(session);
-      const hits=hitTestSource?frame.getHitTestResults(hitTestSource):[];
-      if(hits.length){
-        const pose=hits[0].getPose(renderer.xr.getReferenceSpace());
-        if(pose){reticle.matrix.fromArray(pose.transform.matrix);reticle.visible=true;}
-      }else reticle.visible=false;
-      updateButtons();
-    }
+    orbit.update();
+    ringGrid.rotation.y=elapsed*.023;
     renderer.render(scene,camera);
   });
   const onResize=()=>resize();window.addEventListener('resize',onResize);
   function setEnabled(v){enabled=v; if(v)resize();}
-  async function endXR(){try{await renderer.xr.getSession()?.end();}catch(e){console.warn(e);}}
-  function setARButtons(a,b){placeButton=a;replaceButton=b;updateButtons();}
-  return {setConstraint,setScale,setRotation,setEnabled,resize,place,resetPlacement,endXR,setARButtons};
+  return {setConstraint,setScale,setRotation,setEnabled,resize};
 }

@@ -5,7 +5,6 @@ const $$ = selector => [...document.querySelectorAll(selector)];
 const state = {view:'persona',constraint:0,area:0,mode:'all',zoomIndex:2,original:false,overview:false,auto:null};
 const zoomLevels=[.78,.9,1,1.15,1.3];
 let sceneAPI=null;
-let xrSessionActive=false;
 
 function esc(text) {
   return String(text).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -152,7 +151,6 @@ buildMap();setMapMode('all');updateZoom();selectArea(0,false);
 // --- NAVIGATION / PRESENTATION ---
 async function openView(view){
   if(view!=='persona'&&view!=='map')return;
-  if(view==='map'&&xrSessionActive&&sceneAPI){await sceneAPI.endXR();}
   state.view=view;
   $('#screen-persona').hidden=view!=='persona';
   $('#screen-map').hidden=view!=='map';
@@ -161,8 +159,6 @@ async function openView(view){
     btn.classList.toggle('active',active);
     if(active)btn.setAttribute('aria-current','page');else btn.removeAttribute('aria-current');
   });
-  $('#ar-button-slot').hidden=view!=='persona';
-  $('#ar-controls').hidden=view!=='persona';
   if(view!=='persona')pauseAuto();
   sceneAPI?.setEnabled(view==='persona');
   if(view==='persona')sceneAPI?.resize();
@@ -188,13 +184,7 @@ window.addEventListener('keydown',e=>{
 // artwork remains visible and every User Story Map feature keeps working.
 try {
   const module=await import('./firefighter.js');
-  sceneAPI=module.createFirefighterScene({
-    stage:$('#three-stage'),
-    launchSlot:$('#ar-button-slot'),
-    overlay:$('#app'),
-    onXRStart:()=>{xrSessionActive=true;document.body.classList.add('in-xr');$('#ar-prev').hidden=false;$('#ar-next').hidden=false;pauseAuto();},
-    onXREnd:()=>{xrSessionActive=false;document.body.classList.remove('in-xr');$('#ar-prev').hidden=true;$('#ar-next').hidden=true;}
-  });
+  sceneAPI=module.createFirefighterScene({stage:$('#three-stage')});
   sceneAPI.setConstraint(CONSTRAINTS[state.constraint].id);
   sceneAPI.setEnabled(state.view==='persona');
   $('#model-size').addEventListener('input',e=>{
@@ -203,19 +193,10 @@ try {
   $('#model-rotate').addEventListener('input',e=>{
     $('#rotation-value').textContent=e.target.value+'°';sceneAPI?.setRotation(Number(e.target.value));
   });
-  $('#ar-prev').addEventListener('click',()=>selectConstraint(state.constraint-1));
-  $('#ar-next').addEventListener('click',()=>selectConstraint(state.constraint+1));
-  $('#ar-place').addEventListener('click',()=>sceneAPI?.place());
-  $('#ar-replace').addEventListener('click',()=>sceneAPI?.resetPlacement());
-  sceneAPI.setARButtons($('#ar-place'),$('#ar-replace'));
-  // Prevent UI taps being interpreted as AR model placement.
-  $('#app').addEventListener('beforexrselect',event=>{
-    if(event.target.closest('button,a,input,summary,#screen-map'))event.preventDefault();
-  });
+
 } catch(error) {
   console.warn('3D not loaded; interactive 2D fall-back remains available.',error);
   $('.stage-subtitle').textContent='3D optional · Interactive storyboard available offline';
-  $('#ar-button-slot').hidden=true;
   $('.model-options').hidden=true;
 }
 if(location.hash==='#map')openView('map');
