@@ -4,8 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#101c2b" />
-  <meta name="description" content="RIPLEY – interaktive User Analysis und vollständige User Story Map für die Masterverteidigung." />
-  <title>RIPLEY · User Analysis & Story Map</title>
+  <meta name="description" content="RIPLEY – interaktive User Analysis, Use Case und vollständige User Story Map für die Masterverteidigung." />
+  <title>RIPLEY · User Analysis, Use Case & Story Map</title>
   <link rel="stylesheet" href="./style.css" />
   <script type="importmap">
     {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}
@@ -17,7 +17,8 @@
       <a class="brand" href="../" aria-label="Zur RIPLEY-Startseite"><span class="brand-symbol">R</span><span><strong>RIPLEY</strong><small>USER-CENTERED DESIGN</small></span></a>
       <nav class="screen-nav" aria-label="Präsentationsansichten">
         <button class="nav-tab active" data-view="persona" aria-current="page"><span>01</span> User Analysis</button>
-        <button class="nav-tab" data-view="map"><span>02</span> User Story Map</button>
+        <button class="nav-tab" data-view="usecase"><span>02</span> Use Case</button>
+        <button class="nav-tab" data-view="map"><span>03</span> User Story Map</button>
       </nav>
       <button class="icon-button" id="fullscreen" type="button" title="Vollbildmodus" aria-label="Vollbildmodus">⛶</button>
     </header>
@@ -91,8 +92,121 @@
               <div><label for="model-size">Größe <output id="size-value">100 %</output></label><input id="model-size" type="range" min="55" max="180" step="5" value="100" /></div>
               <div><label for="model-rotate">Drehung <output id="rotation-value">0°</output></label><input id="model-rotate" type="range" min="0" max="360" step="5" value="0" /></div>
             </details>
-            <div class="presentation-note"><strong>Use case</strong> · Bei der Lagefeststellung erscheint eine Situation zunächst unkritisch. RIPLEY soll perspektivisch zusätzliche akustische Hinweise liefern – nicht selbst taktische Entscheidungen treffen.</div>
-            <div class="panel-bottom"><button id="to-map" type="button" class="to-map">Explore the User Story Map <span>↗</span></button></div>
+            <div class="presentation-note"><strong>Next: Use Case</strong> · Ein kurzer, konzeptioneller Einsatzablauf zeigt, warum diese Anforderungen relevant sind.</div>
+            <div class="panel-bottom"><button id="to-usecase" type="button" class="to-map">Explore the Use Case <span>↗</span></button></div>
+          </aside>
+        </div>
+      </section>
+
+
+      <section id="screen-usecase" class="screen" hidden aria-label="Konzeptionelles Einsatzszenario für RIPLEY">
+        <div class="usecase-layout">
+          <div class="case-stage">
+            <div class="case-topline"><span class="eyebrow">CHAPTER 05.4 · FIREFIGHTER PERSONA</span><span class="case-eyebrow">CONCEPTUAL SCENARIO</span></div>
+            <div class="case-stage-title">When a room <em>looks safe.</em></div>
+            <p class="case-stage-subtitle">Situation Assessment · A possible concealed fire hazard</p>
+            <div class="case-scene case-state-0" id="case-scene" aria-label="Schematische Szene einer Feuerwehrkraft bei der Beurteilung eines Raumes mit möglichem verborgenem Brandherd">
+              <svg viewBox="0 0 940 580" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="case-svg-title case-svg-desc">
+                <title id="case-svg-title">Konzeptionelles Szenario zur Lagefeststellung</title>
+                <desc id="case-svg-desc">Eine Feuerwehrkraft nähert sich einer unklaren Einsatzumgebung. Rechts könnte ein durch Möbel verdeckter Brand entstehen. In den späteren Schritten erscheint eine hypothetische zusätzliche akustische Information, die eine erneute Lagefeststellung unterstützt.</desc>
+                <defs>
+                  <linearGradient id="case-room" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#213a4e"/><stop offset="1" stop-color="#142a39"/></linearGradient>
+                  <linearGradient id="case-corridor" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#1a3042"/><stop offset="1" stop-color="#101e2d"/></linearGradient>
+                  <linearGradient id="fire-glow" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#ffda75" stop-opacity=".7"/><stop offset="1" stop-color="#f06343" stop-opacity="0"/></linearGradient>
+                  <radialGradient id="fire-bloom"><stop stop-color="#ff9658" stop-opacity=".60"/><stop offset="1" stop-color="#ff9658" stop-opacity="0"/></radialGradient>
+                  <pattern id="floor-grid" width="35" height="35" patternUnits="userSpaceOnUse"><path d="M35 0H0V35" fill="none" stroke="#6794aa" stroke-opacity=".11" stroke-width="1"/></pattern>
+                </defs>
+                <rect x="18" y="90" width="902" height="425" rx="15" fill="url(#case-corridor)" stroke="#7eabb9" stroke-opacity=".29"/>
+                <path d="M478 92H917V507H478Z" fill="url(#case-room)"/>
+                <path d="M20 410H918V510H20Z" fill="url(#floor-grid)" opacity=".9"/>
+                <path d="M20 410H919" stroke="#4f7888" stroke-width="2"/>
+                <path d="M480 92V262M480 376V510" stroke="#86a9b8" stroke-width="19" stroke-linecap="square"/>
+                <path d="M480 264V375" stroke="#69b5ba" stroke-opacity=".65" stroke-width="2" stroke-dasharray="7 9"/>
+                <rect x="502" y="220" width="192" height="167" rx="10" stroke="#9fbfc9" stroke-opacity=".19" fill="#36556a" fill-opacity=".10"/>
+                <path d="M682 245V405" stroke="#53788e" stroke-opacity=".45"/>
+                <rect x="702" y="328" width="143" height="83" rx="9" fill="#30495c" stroke="#8da8af" stroke-opacity=".38" stroke-width="2"/>
+                <rect x="717" y="310" width="115" height="23" rx="6" fill="#3b5868"/>
+                <rect x="709" y="410" width="15" height="24" rx="2" fill="#1c3445"/><rect x="822" y="410" width="15" height="24" rx="2" fill="#1c3445"/>
+                <rect x="526" y="379" width="131" height="31" rx="6" fill="#35556b" stroke="#94b5ba" stroke-opacity=".38"/>
+                <path d="M547 379V347H640V379" stroke="#7299a5" stroke-width="6" fill="none"/>
+                <g class="case-hazard">
+                  <ellipse cx="763" cy="357" rx="117" ry="129" fill="url(#fire-bloom)"/>
+                  <path class="flame-a" d="M748 378Q722 348 739 322Q742 345 756 337Q769 321 759 301Q803 338 772 380Z" fill="#ee7949"/>
+                  <path class="flame-b" d="M750 379Q739 357 750 345Q755 358 763 343Q780 364 761 380Z" fill="#ffe09a"/>
+                  <path class="smoke-s" d="M752 326Q729 298 746 282Q775 260 756 235" fill="none" stroke="#abb8bd" stroke-opacity=".29" stroke-width="20" stroke-linecap="round"/>
+                </g>
+                <rect x="715" y="292" width="133" height="118" rx="8" fill="#30495a" opacity=".94"/>
+                <rect x="725" y="284" width="115" height="24" rx="5" fill="#456174"/>
+                <g class="case-concealment" fill="none" stroke="#becfd5" stroke-opacity=".23" stroke-width="2"><path d="M690 211v174"/><path d="M694 211L680 220"/><path d="M694 385L680 376"/></g>
+                <g class="case-smoke">
+                  <path d="M537 160Q602 112 662 154Q713 184 765 144T872 185" stroke="#cbd4d4" stroke-width="38" stroke-opacity=".07" fill="none" stroke-linecap="round"/>
+                  <path d="M495 236Q570 206 633 236Q701 272 793 224" stroke="#cbd4d4" stroke-width="65" stroke-opacity=".08" fill="none" stroke-linecap="round"/>
+                  <path d="M540 327Q642 297 685 320T860 318" stroke="#cbd4d4" stroke-width="49" stroke-opacity=".08" fill="none" stroke-linecap="round"/>
+                </g>
+                <g class="case-figure" transform="translate(270,256)">
+                  <ellipse cx="0" cy="175" rx="66" ry="14" fill="#000" opacity=".32"/>
+                  <path d="M-42 36L-37 130L-21 131L-12 74L5 130L27 130L30 37Z" fill="#21394b" stroke="#85a6ab" stroke-width="3"/>
+                  <path d="M-45 126h28v51h-38v-17M0 126h28v50H-4" stroke="#263d4d" stroke-width="19"/>
+                  <path d="M-54 176H-9M-4 176H37" stroke="#101c27" stroke-width="15" stroke-linecap="round"/>
+                  <path d="M-46-12Q-62-4-57 36L-50 80H31L41 12Q36-21-5-25Z" fill="#243f50" stroke="#88a7b1" stroke-width="3"/>
+                  <path d="M-49 42H31" stroke="#f2c96b" stroke-width="14"/><path d="M-49 42H31" stroke="#e0f2d5" stroke-width="4"/>
+                  <path d="M-47-8L-82 55L-61 64L-30 18M30-9L59 58L40 66L11 19" fill="#233d4d" stroke="#87a6b2" stroke-width="8" stroke-linejoin="round"/>
+                  <path d="M-58 56L-65 72M42 58L45 72" stroke="#e4c877" stroke-width="13" stroke-linecap="round"/>
+                  <rect x="-16" y="-86" width="34" height="61" rx="12" fill="#263e4e" stroke="#a2bec5" stroke-width="3"/>
+                  <path d="M-33-66Q-31-103 3-107Q34-101 35-66" fill="#e0bc50" stroke="#f1d975" stroke-width="5"/>
+                  <path d="M-31-65H35" stroke="#b8a04e" stroke-width="12" stroke-linecap="round"/>
+                  <path d="M-22-57H24L16-40H-15Z" fill="#83d7ed" opacity=".52"/>
+                  <rect x="-12" y="-43" width="23" height="22" rx="7" fill="#354d5a" stroke="#d7e7e0" stroke-width="2"/>
+                  <rect x="28" y="-12" width="22" height="31" rx="4" fill="#2b4756" stroke="#a9c6cb" stroke-width="2"/>
+                  <circle cx="40" cy="-2" r="5" fill="#8ff2d0"/>
+                </g>
+                <g class="case-labels" font-family="system-ui, sans-serif" font-weight="800" font-size="12" letter-spacing="1.4" fill="#c4d8e0">
+                  <text x="55" y="127">RECONNAISSANCE</text><text x="635" y="127">UNCERTAIN INTERIOR</text>
+                </g>
+                <g class="case-observation">
+                  <path d="M332 306Q384 271 428 295" fill="none" stroke="#79cbd3" stroke-width="3" stroke-dasharray="8 9"/>
+                  <text x="341" y="257" fill="#b6d4dc" font-family="system-ui" font-size="12">Limited visibility</text>
+                </g>
+                <g class="case-acoustic">
+                  <circle class="case-pulse ring-1" cx="319" cy="267" r="28" stroke="#9ce6c8" fill="none" stroke-width="3"/>
+                  <circle class="case-pulse ring-2" cx="319" cy="267" r="51" stroke="#9ce6c8" fill="none" stroke-width="2"/>
+                  <circle class="case-pulse ring-3" cx="319" cy="267" r="73" stroke="#9ce6c8" fill="none" stroke-width="2"/>
+                  <rect x="50" y="163" width="206" height="71" rx="13" fill="#174f4e" stroke="#8de9c4" stroke-width="1.5"/>
+                  <text x="70" y="189" fill="#c5eede" font-size="11" font-family="system-ui" font-weight="800">FUTURE RIPLEY CONCEPT</text>
+                  <text x="70" y="211" fill="#ffffff" font-size="14" font-family="system-ui" font-weight="750">Possible acoustic indication</text>
+                  <path d="M259 216L298 257" fill="none" stroke="#8de9c4" stroke-width="2"/>
+                </g>
+                <g class="case-assessment">
+                  <rect x="493" y="163" width="366" height="73" rx="12" fill="#18413d" stroke="#84d3b2" stroke-width="1.5"/>
+                  <text x="511" y="189" fill="#baf2d8" font-size="12" font-family="system-ui" font-weight="800">REASSESS THE SITUATION</text>
+                  <text x="511" y="211" fill="#effff8" font-size="13" font-family="system-ui">Use additional information; follow procedures</text>
+                </g>
+                <g font-family="system-ui" font-size="11" fill="#8cabb9"><text x="57" y="483">FIREFIGHTER · JAN PETERSEN</text><text x="637" y="483">ILLUSTRATIVE SCENARIO</text></g>
+              </svg>
+            </div>
+            <div class="case-stage-foot"><span class="live-dot"></span> NOT A VALIDATED DETECTION · NO AUTONOMOUS DECISION</div>
+          </div>
+          <aside class="usecase-panel">
+            <div class="section-index">02 / USE CASE <span>CHAPTER 5.4</span></div>
+            <h1>Concealed <span>Fire Hazard.</span></h1>
+            <p class="lede">Ein Einsatzszenario aus der Feuerwehr-Persona – in vier kurzen Schritten.</p>
+            <div class="case-steps" id="case-steps" aria-label="Schritte des Einsatzszenarios"></div>
+            <div class="case-detail" aria-live="polite">
+              <div class="case-detail-kicker" id="case-detail-kicker">STEP 01 / 04</div>
+              <h2 id="case-detail-title">Initial Situation</h2>
+              <p id="case-detail-text"></p>
+              <div class="case-takeaway"><span>WHY IT MATTERS</span><p id="case-detail-takeaway"></p></div>
+            </div>
+            <div class="scenario-controls case-controls">
+              <button type="button" id="previous-case">← Zurück</button>
+              <button type="button" id="next-case" class="primary">Weiter →</button>
+            </div>
+            <details class="case-speaking-note">
+              <summary>Kurzer Sprechtext (ca. 30 Sekunden)</summary>
+              <p>„Bei der Lagefeststellung kann eine Situation zunächst unkritisch wirken, obwohl eine Brandquelle verdeckt ist. Rauch, eingeschränkte Sicht und Zeitdruck erschweren die Einschätzung. RIPLEY soll zukünftig zusätzliche akustische Hinweise liefern, damit Einsatzkräfte die Lage erneut beurteilen können. Es ersetzt dabei weder die üblichen Einsatzverfahren noch die Entscheidung der Feuerwehrkraft. Daraus lassen sich konkrete Anforderungen an Bedienung, Anzeige und Warnfunktion ableiten.“</p>
+            </details>
+            <div class="case-disclaimer"><strong>Wichtig:</strong> Das Szenario beschreibt die angestrebte Nutzung. Eine zuverlässige automatische Branddetektion und Warnung wurden in der Masterarbeit noch nicht validiert.</div>
+            <div class="panel-bottom"><button id="case-to-map" type="button" class="to-map">Explore the User Story Map <span>↗</span></button></div>
           </aside>
         </div>
       </section>
