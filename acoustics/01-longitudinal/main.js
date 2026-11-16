@@ -23,7 +23,7 @@ app.innerHTML = `
     <div class="spacer"></div>
     <!-- This toggle remains accessible even when the entire controls panel is hidden. -->
     <div id="menu-toggle-row">
-      <button id="panel-toggle" type="button" aria-controls="controls-panel" aria-expanded="true">⌄ Menü ausblenden</button>
+      <button id="panel-toggle" type="button" aria-controls="controls-panel" aria-expanded="false">☰ Menü</button>
     </div>
     <section id="controls-panel" aria-label="Akustik-Demonstration">
       <details class="control-menu" id="menu-medium">
@@ -142,7 +142,7 @@ const panelToggle = $('#panel-toggle');
 function setPanelExpanded(expanded) {
   controlPanel.hidden = !expanded;
   panelToggle.setAttribute('aria-expanded', String(expanded));
-  panelToggle.textContent = expanded ? '⌄ Menü ausblenden' : '☰ Menü öffnen';
+  panelToggle.textContent = expanded ? '✕ Menü' : '☰ Menü';
 }
 panelToggle.addEventListener('click', event => {
   event.stopPropagation();
@@ -150,7 +150,7 @@ panelToggle.addEventListener('click', event => {
 });
 // Leave the existing desktop interface open. On phones, start with the full
 // panel closed so the AR camera has the largest possible viewing area.
-setPanelExpanded(!window.matchMedia('(max-width: 760px), (max-height: 540px)').matches);
+setPanelExpanded(false);
 
 for (const menu of document.querySelectorAll('details.control-menu')) {
   menu.addEventListener('toggle', () => {
@@ -162,6 +162,30 @@ $('#overlay').addEventListener('beforexrselect', e => {
 });
 
 // --- 3D / Desktop and WebXR share the same scene ---
+
+function enablePinchScaling(){
+  const el = renderer.domElement;
+  let startDist = 0;
+  let startScale = state.scale;
+  const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
+  const dist = touches => Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
+  el.addEventListener('touchstart', e => {
+    if (e.target.closest('#overlay')) return;
+    if (e.touches.length === 2) { startDist = dist(e.touches); startScale = state.scale; }
+  }, {passive:true});
+  el.addEventListener('touchmove', e => {
+    if (e.target.closest('#overlay')) return;
+    if (e.touches.length === 2 && startDist > 0) {
+      e.preventDefault();
+      const nextScale = clamp(startScale * (dist(e.touches) / startDist), 0.3, 2.5);
+      state.scale = nextScale;
+      $('#size-slider').value = Math.round(nextScale * 100);
+      updateTransform();
+    }
+  }, {passive:false});
+  el.addEventListener('touchend', e => { if (e.touches.length < 2) startDist = 0; });
+}
+
 const scene = new THREE.Scene();
 const background = new THREE.Color('#122338');
 scene.background = background;
@@ -439,6 +463,7 @@ const arButton=ARButton.createButton(renderer,{
   domOverlay:{root:$('#overlay')}
 });
 $('#ar-launch').appendChild(arButton);
+enablePinchScaling();
 renderer.xr.addEventListener('sessionstart',()=>{
   document.body.classList.add('in-xr');scene.background=null;
   orbit.enabled=false;resetPlacement();

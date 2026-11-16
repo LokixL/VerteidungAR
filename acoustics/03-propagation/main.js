@@ -18,7 +18,7 @@ $('#app').innerHTML = `
   </header>
   <div class="scene-label" id="scene-label">REFLECTION · SCHALLWELLEN AN EINER WAND</div>
   <div class="spacer"></div>
-  <div id="menu-toggle-row"><button id="panel-toggle" type="button" aria-expanded="true" aria-controls="controls-panel">⌄ Menü ausblenden</button></div>
+  <div id="menu-toggle-row"><button id="panel-toggle" type="button" aria-expanded="false" aria-controls="controls-panel">☰ Menü</button></div>
   <section id="controls-panel" aria-label="Akustik 3 Steuerung">
     <details class="control-menu" open>
       <summary><span>〰 Phänomen</span><span class="menu-current" id="mode-current">Reflection</span><span class="arrow">⌄</span></summary>
@@ -102,13 +102,38 @@ const setStatus=text=>$('#status').textContent=text;
 const fmt=n=>Math.round(n).toLocaleString('de-DE');
 const panel=$('#controls-panel');
 const panelButton=$('#panel-toggle');
-function setPanel(open){panel.hidden=!open;panelButton.textContent=open?'⌄ Menü ausblenden':'☰ Menü öffnen';panelButton.setAttribute('aria-expanded',String(open));}
+function setPanel(open){panel.hidden=!open;panelButton.textContent=open?'✕ Menü':'☰ Menü';panelButton.setAttribute('aria-expanded',String(open));}
 panelButton.addEventListener('click',e=>{e.stopPropagation();setPanel(panel.hidden);});
+setPanel(false);
 setPanel(!matchMedia('(max-width:760px), (max-height:540px)').matches);
 for(const d of document.querySelectorAll('.control-menu'))d.addEventListener('toggle',()=>{if(d.open){for(const other of document.querySelectorAll('.control-menu'))if(other!==d)other.open=false;}});
 $('#overlay').addEventListener('beforexrselect',event=>{if(event.target.closest('button, summary, input, #controls-panel, #ar-launch'))event.preventDefault();});
 
 // ------ Three.js scene ------
+
+function enablePinchScaling(){
+  const el = renderer.domElement;
+  let startDist = 0;
+  let startScale = s.scale;
+  const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
+  const dist = touches => Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
+  el.addEventListener('touchstart', e => {
+    if (e.target.closest('#overlay')) return;
+    if (e.touches.length === 2) { startDist = dist(e.touches); startScale = s.scale; }
+  }, {passive:true});
+  el.addEventListener('touchmove', e => {
+    if (e.target.closest('#overlay')) return;
+    if (e.touches.length === 2 && startDist > 0) {
+      e.preventDefault();
+      const nextScale = Math.round(clamp(startScale * (dist(e.touches) / startDist), 30, 250));
+      s.scale = nextScale;
+      $('#size').value = nextScale;
+      syncTransform();
+    }
+  }, {passive:false});
+  el.addEventListener('touchend', e => { if (e.touches.length < 2) startDist = 0; });
+}
+
 const scene=new THREE.Scene();
 const bg=new THREE.Color('#132638');scene.background=bg;
 scene.add(new THREE.HemisphereLight('#e5ffff','#314557',2.0));
@@ -382,6 +407,7 @@ $('#place-now').addEventListener('click',e=>{e.stopPropagation();place();});
 $('#place-again').addEventListener('click',e=>{e.stopPropagation();resetPlacement();});
 const button=ARButton.createButton(renderer,{requiredFeatures:['hit-test'],optionalFeatures:['dom-overlay'],domOverlay:{root:$('#overlay')}});
 $('#ar-launch').appendChild(button);
+enablePinchScaling();
 renderer.xr.addEventListener('sessionstart',()=>{
   document.body.classList.add('in-xr');scene.background=null;orbit.enabled=false;resetPlacement();
   if(!renderer.xr.getSession()?.domOverlayState)setStatus('AR aktiv · UI eventuell nicht sichtbar (DOM Overlay fehlt)');

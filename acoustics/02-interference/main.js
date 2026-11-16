@@ -18,7 +18,7 @@ $('#app').innerHTML = `
   </header>
   <div class="scene-label" id="scene-label">ADDITION · ZWEI WELLEN → EIN SIGNAL</div>
   <div class="spacer"></div>
-  <div id="menu-toggle-row"><button id="panel-toggle" type="button" aria-expanded="true" aria-controls="controls-panel">⌄ Menü ausblenden</button></div>
+  <div id="menu-toggle-row"><button id="panel-toggle" type="button" aria-expanded="false" aria-controls="controls-panel">☰ Menü</button></div>
   <section id="controls-panel" aria-label="Akustik 2 Steuerung">
     <details class="control-menu" id="menu-drag" open>
       <summary><span>↔ Wellen selbst verschieben</span><span class="menu-current" id="drag-current">0 λ · Addition</span><span class="arrow">⌄</span></summary>
@@ -134,10 +134,11 @@ const panel=$('#controls-panel');
 const panelBtn=$('#panel-toggle');
 function expandPanel(open){
   panel.hidden=!open;
-  panelBtn.textContent=open?'⌄ Menü ausblenden':'☰ Menü öffnen';
+  panelBtn.textContent=open?'✕ Menü':'☰ Menü';
   panelBtn.setAttribute('aria-expanded',String(open));
 }
 panelBtn.addEventListener('click', e=>{e.stopPropagation();expandPanel(panel.hidden);});
+expandPanel(false);
 expandPanel(!matchMedia('(max-width:760px), (max-height:540px)').matches);
 for(const el of document.querySelectorAll('details.control-menu')){
   el.addEventListener('toggle',()=>{
@@ -147,6 +148,30 @@ for(const el of document.querySelectorAll('details.control-menu')){
 $('#overlay').addEventListener('beforexrselect',event=>{
   if(event.target.closest('button, summary, input, #controls-panel, #ar-launch'))event.preventDefault();
 });
+
+
+function enablePinchScaling(){
+  const el = renderer.domElement;
+  let startDist = 0;
+  let startScale = st.scale;
+  const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
+  const dist = touches => Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
+  el.addEventListener('touchstart', e => {
+    if (e.target.closest('#overlay')) return;
+    if (e.touches.length === 2) { startDist = dist(e.touches); startScale = st.scale; }
+  }, {passive:true});
+  el.addEventListener('touchmove', e => {
+    if (e.target.closest('#overlay')) return;
+    if (e.touches.length === 2 && startDist > 0) {
+      e.preventDefault();
+      const nextScale = clamp(startScale * (dist(e.touches) / startDist), 0.3, 2.5);
+      st.scale = nextScale;
+      $('#size-slider').value = Math.round(nextScale * 100);
+      updateUI();
+    }
+  }, {passive:false});
+  el.addEventListener('touchend', e => { if (e.touches.length < 2) startDist = 0; });
+}
 
 const scene = new THREE.Scene();
 const bg = new THREE.Color('#14263a');
@@ -538,6 +563,7 @@ controller.addEventListener('select',place);
 $('#place-now').addEventListener('click',e=>{e.stopPropagation();place();});
 $('#place-again').addEventListener('click',e=>{e.stopPropagation();resetPlacement();});
 const arButton=ARButton.createButton(renderer,{requiredFeatures:['hit-test'],optionalFeatures:['dom-overlay'],domOverlay:{root:$('#overlay')}});
+enablePinchScaling();
 $('#ar-launch').appendChild(arButton);
 renderer.xr.addEventListener('sessionstart',()=>{
   document.body.classList.add('in-xr');scene.background=null;orbit.enabled=false;resetPlacement();

@@ -19,7 +19,7 @@ $('#app').innerHTML = `
   </header>
   <div class="scene-label" id="scene-label">TEMPERATURGRADIENT · SCHALLBRECHUNG</div>
   <div class="spacer"></div>
-  <div id="menu-toggle-row"><button id="panel-toggle" type="button" aria-expanded="true" aria-controls="controls-panel">⌄ Menü ausblenden</button></div>
+  <div id="menu-toggle-row"><button id="panel-toggle" type="button" aria-expanded="false" aria-controls="controls-panel">☰ Menü</button></div>
   <section id="controls-panel" aria-label="Akustik 4 Steuerung">
     <details class="control-menu" open>
       <summary><span>〰 Thema</span><span class="menu-current" id="mode-current">Temperaturgradient</span><span class="arrow">⌄</span></summary>
@@ -130,10 +130,11 @@ const panel = $('#controls-panel');
 const panelToggle = $('#panel-toggle');
 function setPanel(open) {
   panel.hidden = !open;
-  panelToggle.textContent = open ? '⌄ Menü ausblenden' : '☰ Menü öffnen';
+  panelToggle.textContent = open ? '✕ Menü' : '☰ Menü';
   panelToggle.setAttribute('aria-expanded', String(open));
 }
 panelToggle.addEventListener('click', event => {event.stopPropagation(); setPanel(panel.hidden);});
+setPanel(false);
 setPanel(!matchMedia('(max-width:760px), (max-height:540px)').matches);
 for (const detail of document.querySelectorAll('.control-menu')) {
   detail.addEventListener('toggle', () => {
@@ -194,6 +195,30 @@ function aimRay(medium) {
 }
 
 // ---- Three.js AR + 3D visualisation ----
+
+function enablePinchScaling(){
+  const el = renderer.domElement;
+  let startDist = 0;
+  let startScale = S.scale;
+  const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
+  const dist = touches => Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
+  el.addEventListener('touchstart', e => {
+    if (e.target.closest('#overlay')) return;
+    if (e.touches.length === 2) { startDist = dist(e.touches); startScale = S.scale; }
+  }, {passive:true});
+  el.addEventListener('touchmove', e => {
+    if (e.target.closest('#overlay')) return;
+    if (e.touches.length === 2 && startDist > 0) {
+      e.preventDefault();
+      const nextScale = Math.round(clamp(startScale * (dist(e.touches) / startDist), 30, 250));
+      S.scale = nextScale;
+      $('#size').value = nextScale;
+      syncControls();
+    }
+  }, {passive:false});
+  el.addEventListener('touchend', e => { if (e.touches.length < 2) startDist = 0; });
+}
+
 const scene=new THREE.Scene();
 const sceneBackground = new THREE.Color('#102237'); scene.background=sceneBackground;
 scene.add(new THREE.HemisphereLight('#b8f8ff','#39475c',2.4));
@@ -502,6 +527,7 @@ xrController.addEventListener('select',place);
 $('#place-now').addEventListener('click',e=>{e.stopPropagation();place();});
 $('#place-again').addEventListener('click',e=>{e.stopPropagation();resetPlacement();});
 const arButton=ARButton.createButton(renderer,{requiredFeatures:['hit-test'],optionalFeatures:['dom-overlay'],domOverlay:{root:$('#overlay')}});
+enablePinchScaling();
 $('#ar-launch').appendChild(arButton);
 renderer.xr.addEventListener('sessionstart',()=>{
   document.body.classList.add('in-xr');scene.background=null;orbit.enabled=false;resetPlacement();
