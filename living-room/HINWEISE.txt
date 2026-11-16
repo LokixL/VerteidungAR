@@ -1,28 +1,24 @@
-RIPLEY – Wohnzimmer/Heat Transfer V12 (komplettes Menü, Gesten, fachliche Korrekturen)
+RIPLEY – Wohnzimmer / Heat Transfer V13 – Menue unten rechts
 
-ERSETZEN im bestehenden Projekt:
-  VerteidungAR/living-room/main.js
-  VerteidungAR/living-room/style.css
-
-index.html liegt als identische Kopie der hochgeladenen Datei bei; sie muss nicht ersetzt werden.
-Den Ordner models/ (einschließlich living-room.glb) NICHT ändern!
-Auch alle anderen Demos bitte unverändert lassen.
+Ausgehend von der zuletzt gelieferten V12 (Menue, Pinch, ueberarbeitete
+qualitative Thermal View) wurden ausschliesslich Layout-CSS-Regeln ergaenzt.
 
 NEU:
-- Gesamt-Menü startet auch auf Tablet/Desktop geschlossen, kleiner Knopf mittig am rechten Bildschirmrand.
-- Aufgeklappt als seitliches Bedienelement, sonst freie Sicht auf das Wohnzimmer.
-- AR: nach Platzierung 1 Finger drehen, 2 Finger skalieren (WebXR DOM Overlay nötig).
-- 3D-Vorschau: 1 Finger OrbitControls, 2 Finger skaliert das Modell statt der Kamera.
-- Schieberegler für Größe/Drehung bleiben erhalten.
-- Thermal View: drei Prozesse (Radiation, Convection, Conduction) fachlich eingegrenzt.
-  Nur lokale Erwärmung statt willkürlich warmer Möbel/Wände, keine erfundenen °C-Angaben.
-  Die Luftfärbung ist KEINE echte Wärmebildkamera-Darstellung.
+- Beim Seitenstart kleiner, alleinstehender "☰ Menue"-Button unten rechts.
+- Nach Oeffnen Steuerung am rechten unteren Bildschirmrand, klappt nach oben.
+- Schliessen-Button bleibt unten im Panel an derselben Stelle.
+- AR-Start und erneute Platzierung links unten, damit sich Buttons
+  besonders im Querformat nicht ueberlagern.
 
-WICHTIG:
-Die Temperaturansicht ist eine qualitative, vereinfachte Lehrgrafik. Kein berechnetes
-Temperaturfeld, keine kalibrierten Temperaturen und kein realer IR-Kamera-Output.
-Ein optionales GLB-Wohnzimmer verwendet weiterhin eine generische Geometrie; die
-thermischen Effektzonen sind auf die ursprünglich modellierte Steckdosenleiste bezogen
-und können bei einer abweichenden GLB-Anordnung entsprechend versetzt sein.
+Unveraendert: alle Szenarien, Thermal View/Heatmap, Pinch- und Drehgesten,
+AR-Start, Hit-Test und AR-Platzierung, optionales living-room.glb.
 
-AR-Tests auf echtem Android-Gerät nach GitHub Push durchführen.
+INSTALLATION:
+Ersetze im bestehenden Projekt NUR:
+  VerteidungAR/living-room/style.css
+Du kannst die ebenfalls beigefuegte main.js unveraendert lassen: sie ist
+identisch mit V12 und dient nur der Vollstaendigkeit. Die index.html und
+models/ NICHT aendern.
+
+Qualitative Temperaturzonen sind weiterhin keine Messung oder validierte
+thermische Simulation. Echter AR-Test auf Android-Tablet noetig.

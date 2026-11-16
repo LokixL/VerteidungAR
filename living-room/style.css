@@ -214,3 +214,109 @@ body.in-xr.xr-placed #gesture-surface{pointer-events:auto;}
   #controls-panel .menu-toggle-row{min-height:30px;}
   #controls-panel .menu-toggle{min-height:30px;padding:5px 9px;font-size:11px;}
 }
+
+
+/* V13 – Einheitlicher Menue-Dock unten rechts, statt auf halber Hoehe.
+   Geschlossen: nur ein kompakter Button. Geoeffnet: Panel nach oben,
+   mit dauerhaft erreichbarerer Schliessen-Taste am unteren Panelrand. */
+#controls-panel.accordion-panel,
+#controls-panel.accordion-panel.is-collapsed {
+  position: fixed;
+  top: auto;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  right: max(12px, env(safe-area-inset-right));
+  left: auto;
+  transform: none;
+  margin: 0;
+}
+#controls-panel.accordion-panel:not(.is-collapsed) {
+  width: min(360px, calc(100vw - 24px));
+  max-height: min(76dvh, 680px);
+  padding: 8px;
+  gap: 7px;
+  overflow: hidden;
+  border: 1px solid rgba(165,216,230,.26);
+  border-radius: 16px;
+  background: rgba(10,22,33,.92);
+  box-shadow: 0 12px 40px rgba(0,0,0,.38);
+}
+/* Damit die Bedienung oben im Panel scrollt, der Menue-Button aber unten bleibt. */
+#controls-panel.accordion-panel:not(.is-collapsed) .panel-inner {
+  order: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+#controls-panel.accordion-panel .menu-toggle-row {
+  order: 1;
+  flex: 0 0 auto;
+  justify-content: flex-end;
+  min-height: 38px;
+  margin: 0;
+}
+#controls-panel.accordion-panel:not(.is-collapsed) .panel-summary {
+  flex: 1 1 auto;
+  order: -1;
+  text-align: left;
+  padding-left: 5px;
+}
+#controls-panel.accordion-panel.is-collapsed {
+  width: max-content;
+  max-width: none;
+  max-height: none;
+  padding: 0;
+  gap: 0;
+  overflow: visible;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+#controls-panel.accordion-panel.is-collapsed .panel-summary { display: none; }
+#controls-panel.accordion-panel.is-collapsed .menu-toggle-row { min-height: 0; }
+#controls-panel.accordion-panel.is-collapsed .menu-toggle {
+  min-height: 42px;
+  min-width: 100px;
+  padding: 9px 14px;
+  font-size: 13px;
+  border-radius: 999px;
+  box-shadow: 0 6px 24px rgba(0,0,0,.35);
+  background: rgba(13,111,81,.96);
+  border-color: #6cf3ac;
+}
+#controls-panel.accordion-panel:not(.is-collapsed) .menu-toggle {
+  min-height: 38px;
+  border-radius: 999px;
+  background: #177f61;
+}
+/* AR-Start und Neupositionierung links lassen: nichts ueberlappt den Dock rechts. */
+#ar-launch { justify-content: flex-start; align-self: flex-start; }
+#ar-place-actions { align-self: flex-start; justify-content: flex-start; }
+@media (max-width: 440px) {
+  #controls-panel.accordion-panel,
+  #controls-panel.accordion-panel.is-collapsed {
+    right: max(9px, env(safe-area-inset-right));
+    bottom: max(10px, env(safe-area-inset-bottom));
+  }
+  #controls-panel.accordion-panel:not(.is-collapsed) {
+    width: min(335px, calc(100vw - 18px));
+    max-height: min(76dvh, 620px);
+  }
+}
+@media (orientation: landscape) and (max-height: 650px) {
+  #controls-panel.accordion-panel,
+  #controls-panel.accordion-panel.is-collapsed {
+    top: auto;
+    right: max(8px, env(safe-area-inset-right));
+    bottom: max(8px, env(safe-area-inset-bottom));
+    transform: none;
+  }
+  #controls-panel.accordion-panel:not(.is-collapsed) {
+    width: min(335px, 47vw);
+    max-height: calc(100dvh - 16px);
+  }
+  #ar-place-actions, #ar-launch { align-self: flex-start; justify-content: flex-start; }
+}
