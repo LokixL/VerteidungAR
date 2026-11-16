@@ -26,7 +26,7 @@
     const img = document.createElement('img');
     img.className = 'plot-image';
     img.src = chart.image;
-    img.alt = `Original figure ${chart.figure}: ${chart.caption}`;
+    img.alt = `Originalabbildung ${chart.figure}: ${chart.caption}`;
     img.draggable = false;
     img.decoding = 'async';
     wrapper.append(img);
@@ -47,7 +47,7 @@
       btn.style.left = `${hotspot.x}%`;
       btn.style.top = `${hotspot.y}%`;
       btn.title = hotspot.title;
-      btn.setAttribute('aria-label', `Annotation ${i + 1}: ${hotspot.title}`);
+      btn.setAttribute('aria-label', `Erklärpunkt ${i + 1}: ${hotspot.title}`);
       btn.setAttribute('aria-pressed', String(i === pointIndex));
       btn.addEventListener('click', event => { event.preventDefault(); selectPoint(i); });
       wrapper.append(btn);
@@ -72,10 +72,10 @@
       items.append(btn);
     });
     $('noteCard').innerHTML = `<h3>${escapeHTML(point.title)}</h3>
-      <div class="fact"><span class="fact-label">WHAT TO LOOK AT</span><p>${escapeHTML(point.look)}</p></div>
+      <div class="fact"><span class="fact-label">WAS IST ZU SEHEN?</span><p>${escapeHTML(point.look)}</p></div>
       <div class="fact"><span class="fact-label">INTERPRETATION</span><p>${escapeHTML(point.meaning)}</p></div>
-      <div class="fact limit"><span class="fact-label">IMPORTANT LIMITATION</span><p>${escapeHTML(point.limit)}</p></div>
-      <div class="speech-box"><span class="fact-label">WHAT TO SAY</span><p>“${escapeHTML(point.speech)}”</p></div>`;
+      <div class="fact limit"><span class="fact-label">WICHTIGE EINSCHRÄNKUNG</span><p>${escapeHTML(point.limit)}</p></div>
+      <div class="speech-box"><span class="fact-label">SPRECHTEXT</span><p>“${escapeHTML(point.speech)}”</p></div>`;
     const dialog = $('zoomDialog');
     if (dialog.open) updateZoom();
   }
@@ -92,7 +92,16 @@
     $('figureCategory').textContent = chart.category;
     $('figureHeading').textContent = chart.title;
     $('figureSubtitle').textContent = chart.subtitle;
-    $('figureCaption').textContent = `FIGURE ${chart.figure} · THESIS PAGE ${chart.page}  —  ${chart.caption}`;
+    $('figureCaption').textContent = `ABBILDUNG ${chart.figure} · SEITE ${chart.page} DER ARBEIT  —  ${chart.caption}`;
+    const guide = $('plotReadingGuide');
+    if (chart.readingGuide) {
+      // The guidance text is local static data; escape each segment before emphasizing it.
+      guide.innerHTML = chart.readingGuide.split('**').map((part,i) => i % 2 ? `<strong>${escapeHTML(part)}</strong>` : escapeHTML(part)).join('');
+      guide.hidden = false;
+    } else {
+      guide.textContent = '';
+      guide.hidden = true;
+    }
     $('keyMessage').textContent = chart.key;
     Array.from(nav.children).forEach((tab,i)=>{
       const active = i === chartIndex;
@@ -100,7 +109,7 @@
       tab.setAttribute('aria-current',active?'true':'false');
     });
     $('prevFig').disabled = chartIndex === 0;
-    $('nextFig').textContent = chartIndex === charts.length - 1 ? 'Conclusions →' : 'Next figure →';
+    $('nextFig').textContent = chartIndex === charts.length - 1 ? 'Fazit →' : 'Nächste Grafik →';
     showPoint();
   }
 
@@ -136,7 +145,7 @@
 
   function updateZoom() {
     const chart = selected();
-    $('zoomTitle').textContent = `Figure ${chart.figure} — ${chart.title}`;
+    $('zoomTitle').textContent = `Abbildung ${chart.figure} — ${chart.title}`;
     $('zoomStage').replaceChildren(makeStage(chart));
     const point=chart.points[pointIndex];
     $('zoomNote').innerHTML = `<strong>${escapeHTML(point.title)}.</strong> ${escapeHTML(point.meaning)}`;
@@ -155,7 +164,7 @@
     if(document.fullscreenElement) document.exitFullscreen().catch(()=>{});
     else $('app').requestFullscreen?.().catch(()=>{});
   });
-  document.addEventListener('fullscreenchange',()=>{$('fullscreenBtn').innerHTML=document.fullscreenElement?'⛶ <span class="desktop-label">Exit full screen</span>':'⛶ <span class="desktop-label">Present</span>'});
+  document.addEventListener('fullscreenchange',()=>{$('fullscreenBtn').innerHTML=document.fullscreenElement?'⛶ <span class="desktop-label">Vollbild verlassen</span>':'⛶ <span class="desktop-label">Vollbild</span>'});
   document.addEventListener('keydown',e=>{
     if(e.altKey||e.ctrlKey||e.metaKey||['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)) return;
     if(e.key==='f'||e.key==='F') {if($('zoomDialog').open)return; e.preventDefault(); $('fullscreenBtn').click();return}
