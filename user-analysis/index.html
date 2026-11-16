@@ -118,8 +118,12 @@
           <div class="uc-layout uc-table-layout">
             <article class="uc-paper" aria-labelledby="uc-table-caption">
               <div class="uc-paper-head">
-                <div class="uc-paper-kicker">FROM THE MASTER'S THESIS · CHAPTER 7.1</div>
-                <h2 id="uc-table-caption">Table 8: Indoor Fire Detection using Acoustic Detection</h2>
+                <div class="uc-paper-title"><div>
+                  <div class="uc-paper-kicker">FROM THE MASTER'S THESIS · CHAPTER 7.1</div>
+                  <h2 id="uc-table-caption">Table 8: Indoor Fire Detection using Acoustic Detection</h2>
+                </div>
+                  <button id="uc-full-table" class="uc-full-table" type="button" aria-haspopup="dialog" aria-controls="uc-table-dialog" title="Tabelle groß und vollständig anzeigen">⤢ Ganze Tabelle</button>
+                </div>
               </div>
               <table class="uc-source-table" aria-label="Table 8: Indoor Fire Detection using Acoustic Detection">
                 <colgroup><col class="uc-field-col"/><col/></colgroup>
@@ -161,6 +165,14 @@
             </aside>
           </div>
         </div>
+        <dialog id="uc-table-dialog" class="uc-table-dialog" aria-labelledby="uc-dialog-heading">
+          <div class="uc-dialog-header">
+            <div><span class="eyebrow">MASTERTHESIS · TABLE 8 · UC-1</span><h2 id="uc-dialog-heading">Indoor Fire Detection</h2></div>
+            <button type="button" id="uc-dialog-close" class="uc-dialog-close" aria-label="Tabelle schließen">✕ Schließen</button>
+          </div>
+          <div id="uc-dialog-content" class="uc-dialog-content"></div>
+          <p class="uc-dialog-foot">Vollständige Tabelle 8 aus Kapitel 7.1 · Bei kleinen Bildschirmen nach unten scrollen.</p>
+        </dialog>
       </section>
 
       <section id="screen-map" class="screen" hidden aria-label="Vollständige User Story Map">

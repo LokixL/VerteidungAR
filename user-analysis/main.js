@@ -149,6 +149,25 @@ $('#zoom-out').addEventListener('click',()=>{state.zoomIndex=Math.max(0,state.zo
 $('#original-toggle').addEventListener('click',toggleOriginal);
 buildMap();setMapMode('all');updateZoom();selectArea(0,false);
 
+// Use Case: independent, scrollable full-table presentation view.
+// The enlarged version clones the original HTML table; no content is removed.
+const ucTableDialog = $('#uc-table-dialog');
+const ucDialogContent = $('#uc-dialog-content');
+$('#uc-full-table').addEventListener('click', () => {
+  if (!ucDialogContent.firstElementChild) {
+    const full = $('.uc-source-table').cloneNode(true);
+    full.removeAttribute('aria-label');
+    full.setAttribute('aria-label', 'Vollständige Tabelle 8');
+    ucDialogContent.appendChild(full);
+  }
+  ucTableDialog.showModal();
+  ucDialogContent.scrollTop = 0;
+});
+$('#uc-dialog-close').addEventListener('click', () => ucTableDialog.close());
+ucTableDialog.addEventListener('click', e => {
+  if (e.target === ucTableDialog) ucTableDialog.close();
+});
+
 // --- NAVIGATION / PRESENTATION ---
 async function openView(view){
   if(!['persona','usecase','map'].includes(view))return;
@@ -173,6 +192,7 @@ $('#fullscreen').addEventListener('click',async()=>{
   try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen();}catch(e){console.warn('Fullscreen unavailable',e);}
 });
 window.addEventListener('keydown',e=>{
+  if (ucTableDialog.open) return; // Dialog handles Escape; no slide shortcuts during table review.
   const el=document.activeElement;
   if(el&&['INPUT','TEXTAREA','SELECT'].includes(el.tagName))return;
   if(e.key==='1'){e.preventDefault();openView('persona');}
