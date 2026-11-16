@@ -162,3 +162,55 @@ body.in-xr #ar-place-actions{display:flex}
   .scenario-feedback .description{font-size:10px;}
   .quick-actions .reset{min-height:29px;padding:3px 9px;}
 }
+
+
+/* V12 – Side dock. Closed at first load on phones, tablets AND desktop. */
+#controls-panel.accordion-panel {
+  position:fixed;
+  z-index:5;
+  top:50%;
+  right:max(10px,env(safe-area-inset-right));
+  bottom:auto;
+  transform:translateY(-50%);
+  width:min(360px,calc(100vw - 20px));
+  max-height:73dvh;
+  margin:0;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  padding:7px;
+  overflow-y:auto;
+  background:rgba(10,22,33,.86);
+  backdrop-filter:blur(14px);
+  border:1px solid rgba(165,216,230,.26);
+}
+#controls-panel .panel-inner {display:flex;flex-direction:column;gap:5px;min-height:0;}
+#controls-panel .menu-toggle-row {display:flex;align-items:center;gap:9px;min-height:38px;margin:0;}
+#controls-panel .menu-toggle {min-width:102px;min-height:38px;padding:7px 11px;background:#177f61;border-color:#72e0b4;white-space:nowrap;}
+#controls-panel .panel-summary {font-size:11px;color:#c4e9dd;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-width:0;}
+#controls-panel.is-collapsed {
+  width:max-content;
+  max-width:min(78vw,260px);
+  max-height:none;
+  padding:4px 6px;
+  background:rgba(10,22,33,.82);
+  overflow:visible;
+}
+#controls-panel.is-collapsed .panel-inner{display:none!important;}
+#controls-panel.is-collapsed .menu-toggle-row{gap:6px;}
+#controls-panel.is-collapsed .menu-toggle {background:#138858;border-color:#6cf3ac;}
+#controls-panel.accordion-panel .quick-actions{justify-content:flex-end;}
+#gesture-surface{position:absolute;inset:0;z-index:0;pointer-events:none;touch-action:none;}
+body.in-xr.xr-placed #gesture-surface{pointer-events:auto;}
+#overlay > .topbar, #overlay > #ar-place-actions, #overlay > #ar-launch {position:relative;z-index:1;}
+#stage canvas{touch-action:none;}
+@media (max-width:440px){
+  #controls-panel.accordion-panel {width:min(335px,calc(100vw - 18px));max-height:73dvh;right:max(8px,env(safe-area-inset-right));}
+  #controls-panel.is-collapsed{width:max-content;max-height:none;}
+}
+@media (orientation:landscape) and (max-height:650px){
+  #controls-panel.accordion-panel{right:max(7px,env(safe-area-inset-right));width:min(335px,47vw);max-height:88dvh;top:50%;margin:0;}
+  #controls-panel.is-collapsed{width:max-content;max-height:none;}
+  #controls-panel .menu-toggle-row{min-height:30px;}
+  #controls-panel .menu-toggle{min-height:30px;padding:5px 9px;font-size:11px;}
+}

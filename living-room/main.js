@@ -8,12 +8,18 @@ const app = document.querySelector('#app');
 app.innerHTML = `
   <div id="stage"></div>
   <div id="overlay">
+    <div id="gesture-surface" aria-hidden="true"></div>
     <header class="topbar">
       <div class="brand"><strong>RIPLEY</strong><small>FIRE PHYSICS · AR DEMONSTRATOR</small></div>
       <div id="status" role="status" aria-live="polite">3D-Vorschau bereit</div>
     </header>
     <div class="grow"></div>
-    <section class="panel accordion-panel" id="controls-panel" aria-label="AR-Steuerung">
+    <section class="panel accordion-panel is-collapsed" id="controls-panel" aria-label="AR-Steuerung">
+      <div class="menu-toggle-row">
+        <button id="panel-toggle" class="menu-toggle" type="button" aria-controls="panel-inner" aria-expanded="false">☰ Menü</button>
+        <span class="panel-summary" id="panel-summary">Wohnzimmer · Normal</span>
+      </div>
+      <div id="panel-inner" class="panel-inner">
       <details class="control-menu" id="menu-view">
         <summary><span>◉ Ansicht</span><span class="menu-current" id="view-current">Normal</span><span class="menu-arrow">⌄</span></summary>
         <div class="menu-content">
@@ -22,7 +28,7 @@ app.innerHTML = `
             <button id="view-thermal" class="view-button" type="button" aria-pressed="false">Thermal</button>
           </div>
           <div id="thermal-info" class="thermal-info" hidden>
-            <div class="thermal-info-title">Thermal View · schematische Falschfarben</div>
+            <div class="thermal-info-title">Thermal View · qualitative Temperaturzonen</div>
             <div class="thermal-gradient"></div>
             <div class="thermal-ticks"><span>kühl</span><span>warm</span><span>heiß</span></div>
             <p id="thermal-explanation" class="thermal-explanation">Illustrative Wärmeverteilung zum ausgewählten Mechanismus.</p>
@@ -54,7 +60,7 @@ app.innerHTML = `
               <button id="rotate-right" class="stepper" type="button" aria-label="15 Grad nach rechts drehen">↷</button>
             </div>
           </div>
-          <p class="hint" id="hint">Android: START AR drücken, Tisch anvisieren und antippen. Im AR-Modus bleibt das Modell nach dem Platzieren stehen.</p>
+          <p class="hint" id="hint">Android: Start AR → grünen Kreis platzieren. Danach: mit einem Finger drehen, mit zwei Fingern skalieren. Alternativ die Regler nutzen.</p>
         </div>
       </details>
       <div class="scenario-feedback" id="scenario-feedback" hidden>
@@ -65,6 +71,7 @@ app.innerHTML = `
         <p class="description" id="mode-description">Ausgangssituation: Möbel und elektrische Steckdosenleiste.</p>
       </div>
       <div class="quick-actions"><button id="reset" class="reset" type="button">↺ Reset</button></div>
+      </div>
     </section>
     <div id="ar-place-actions" aria-live="polite">
       <button id="place-now" type="button" hidden>◎ Wohnzimmer hier platzieren</button>
@@ -80,13 +87,32 @@ const UI = {
   feedback: document.querySelector('#scenario-feedback'),
   buttons: document.querySelector('#mode-buttons'),
   hint: document.querySelector('#hint'),
-  overlay: document.querySelector('#overlay')
+  overlay: document.querySelector('#overlay'),
+  gestureSurface: document.querySelector('#gesture-surface')
 };
 const setStatus = (message) => { UI.status.textContent = message; };
 
-// Three compact accordion menus. Opening one closes the others.
-// This changes UI only; the AR hit-test, reticle and placement functions are untouched.
-const menus=[...document.querySelectorAll('#controls-panel > details.control-menu')];
+// The entire right-side control dock starts collapsed (also on desktop).
+// Independent AR start and placement buttons remain visible.
+const panel = document.querySelector('#controls-panel');
+const panelToggle = document.querySelector('#panel-toggle');
+const panelInner = document.querySelector('#panel-inner');
+function setPanelOpen(open) {
+  panel.classList.toggle('is-collapsed', !open);
+  panelToggle.setAttribute('aria-expanded', String(open));
+  panelInner.setAttribute('aria-hidden', String(!open));
+  panelToggle.textContent = open ? '✕ Schließen' : '☰ Menü';
+  if(!open)for(const menu of document.querySelectorAll('#panel-inner details.control-menu'))menu.open=false;
+}
+panelToggle.addEventListener('click', e=>{e.stopPropagation();setPanelOpen(panel.classList.contains('is-collapsed'));});
+setPanelOpen(false);
+function refreshPanelSummary() {
+  const sceneName = document.querySelector('#scene-current')?.textContent || 'Wohnzimmer';
+  const viewName = document.querySelector('#view-current')?.textContent || 'Normal';
+  document.querySelector('#panel-summary').textContent = `${sceneName} · ${viewName}`;
+}
+// Opening an accordion section closes the other sections, not the whole dock.
+const menus=[...document.querySelectorAll('#panel-inner details.control-menu')];
 for (const menu of menus) {
   menu.addEventListener('toggle',()=>{
     if(menu.open)for(const other of menus)if(other!==menu)other.open=false;
@@ -217,20 +243,14 @@ function buildConduction() {
   }
 }
 buildRoom();buildFire();buildRadiation();buildConvection();buildConduction();
-// Thermal View is an OPTIONAL layer. Keep all original scene buttons, effects,
-// and the WebXR ARButton / hit-test untouched. No temperature sliders.
-// Qualitative illustrative temperatures, not calculated temperatures or camera data.
+// Thermal view: qualitative MECHANISM diagrams, not measurements/thermography.
+// Do not imply measured °C values or that an IR camera directly images hot air.
 const THERMAL_SCENES = {
-  room:       {source:20, air:20, surface:20, contact:20,
-    note:'Ausgangszustand: gleichmäßig kühle Oberflächen.'},
-  fire:       {source:200, air:35, surface:25, contact:65,
-    note:'Brand: lokaler Hotspot an der Steckdosenleiste.'},
-  radiation:  {source:240, air:45, surface:110, contact:70,
-    note:'Radiation: benachbarte Oberflächen werden bestrahlt und erwärmen sich.'},
-  convection: {source:240, air:120, surface:55, contact:80,
-    note:'Convection: Heißgase steigen auf und erwärmen die obere Raumzone.'},
-  conduction: {source:240, air:40, surface:30, contact:145,
-    note:'Conduction: lokale Wärmeleitung in der Steckdosenleiste.'}
+  room: { note:'Ausgangszustand: keine lokale Erwärmung dargestellt.' },
+  fire: { note:'Brandentstehung: lokaler Wärmeeintrag an der Steckdosenleiste. Der Raum bleibt zunächst überwiegend kühl.' },
+  radiation: { note:'Radiation: Wärme wird durch Strahlung an direkt bestrahlte nahe Oberflächen übertragen. Die Erwärmung ist lokal, nicht am gesamten Sofa.' },
+  convection: { note:'Convection: aufsteigende Heißgase erwärmen den Bereich über der Quelle und benachbarte obere Flächen. Die farbige Luftfahne ist schematisch und keine Thermografie.' },
+  conduction: { note:'Conduction: Wärme breitet sich IM FESTEN Material der Steckdosenleiste vom heißen Bereich zu benachbarten Abschnitten aus; andere Möbel werden dadurch nicht direkt erhitzt.' }
 };
 let currentView='normal';
 let thermalState='room';
@@ -250,7 +270,7 @@ function markProceduralRoom(){
 }
 markProceduralRoom();
 
-// 3D temperature labels face the viewer. Display values are EXAMPLES only.
+// 3D labels name thermal regions; invented absolute temperatures are deliberately avoided.
 function makeThermalLabel(){
   const canvas=document.createElement('canvas');canvas.width=512;canvas.height=128;
   const texture=new THREE.CanvasTexture(canvas);
@@ -261,9 +281,9 @@ function makeThermalLabel(){
   return {canvas,texture,sprite};
 }
 const thermalLabels={source:makeThermalLabel(),air:makeThermalLabel(),surface:makeThermalLabel()};
-thermalLabels.source.sprite.position.set(0.17,0.123,-0.17);
-thermalLabels.air.sprite.position.set(0.035,0.275,-0.06);
-thermalLabels.surface.sprite.position.set(-0.155,0.19,0.06);
+thermalLabels.source.sprite.position.set(0.19,0.105,-0.165);
+thermalLabels.air.sprite.position.set(0.07,0.275,-0.035);
+thermalLabels.surface.sprite.position.set(0.035,0.10,-0.08);
 function drawLabel(label,text){
   const ctx=label.canvas.getContext('2d');ctx.clearRect(0,0,512,128);
   ctx.fillStyle='rgba(10,18,46,0.90)';
@@ -281,49 +301,59 @@ const heatPlume=new THREE.Mesh(
 // Larger at the top, narrowing down towards the hot power strip.
 heatPlume.rotation.z=Math.PI; heatPlume.position.set(SOURCE.x,0.167,SOURCE.z);
 thermalOverlay.add(heatPlume);
-const ceilingHeat=new THREE.Mesh(
-  new THREE.PlaneGeometry(0.53,0.38),
-  new THREE.MeshBasicMaterial({color:'#ee8a2d',transparent:true,opacity:0.20,
+const upperWallHeat=new THREE.Mesh(
+  new THREE.PlaneGeometry(0.18,0.064),
+  new THREE.MeshBasicMaterial({color:'#f3a039',transparent:true,opacity:0.36,
     depthWrite:false,side:THREE.DoubleSide})
 );
-ceilingHeat.rotation.x=-Math.PI/2;
-ceilingHeat.position.set(0.015,0.273,-0.01);
-thermalOverlay.add(ceilingHeat);
+// Rear wall near the upper end of the hot-gas plume, NOT the whole room.
+upperWallHeat.position.set(0.205,0.243,-0.235);
+thermalOverlay.add(upperWallHeat);
 const sourceSpot=new THREE.Mesh(
   new THREE.SphereGeometry(0.026,16,12),
   new THREE.MeshBasicMaterial({color:'#fff2c9',transparent:true,opacity:0.86,depthWrite:false})
 );
 sourceSpot.position.copy(SOURCE); thermalOverlay.add(sourceSpot);
+// Radiation: localized heated floor patch close to the electrical source.
+// A whole sofa turning uniformly orange would not be a defensible heatmap.
 const radiationPatch=new THREE.Mesh(
-  new THREE.PlaneGeometry(0.19,0.065),
-  new THREE.MeshBasicMaterial({color:'#edaa34',transparent:true,opacity:0.38,
+  new THREE.CircleGeometry(0.082,48),
+  new THREE.MeshBasicMaterial({color:'#eeb23f',transparent:true,opacity:0.48,
     side:THREE.DoubleSide,depthWrite:false})
 );
-radiationPatch.position.set(-0.155,0.153,-0.007); thermalOverlay.add(radiationPatch);
-const conductionPatch=box(thermalOverlay,[0.072,0.016,0.035],
-  [0.213,0.026,-0.194],new THREE.MeshBasicMaterial({color:'#f67722',transparent:true,
-  opacity:0.7,depthWrite:false}));
+radiationPatch.rotation.x=-Math.PI/2;
+radiationPatch.position.set(0.142,0.014,-0.155);
+thermalOverlay.add(radiationPatch);
+// Conduction: qualitative temperature gradient ALONG the solid power strip.
+const conductionGradient=new THREE.Group();
+for (let i=0;i<7;i++) {
+  const level = Math.abs(i-3);
+  const material = new THREE.MeshBasicMaterial({
+    color: [0xffedac,0xf99138,0xe4a846,0x3f9ba4][level],
+    transparent:true,opacity:0.9,depthWrite:false
+  });
+  const segment=new THREE.Mesh(new THREE.BoxGeometry(0.010,0.0026,0.028),material);
+  segment.position.set(0.213+(i-3)*0.0105,0.034,-0.194);
+  conductionGradient.add(segment);
+}
+thermalOverlay.add(conductionGradient);
 
 function applyThermalMaterials(){
-  // GLB objects are displayed in a cool false colour unless their geometry
-  // was explicitly tagged. The local hotspot and plume overlays remain aligned
-  // to the procedural demo's SOURCE; adjust for a different GLB layout.
+  // The fallback room's meshes have semantic roles. The optional external GLB
+  // has no assured thermal mesh tags and therefore receives a neutral base color.
   roomRoot.traverse(obj=>{
     if(!obj.isMesh)return;
     if(!obj.userData.normalMaterial)obj.userData.normalMaterial=obj.material;
     if(currentView!=='thermal'){
-      obj.material=obj.userData.normalMaterial;return;
+      obj.material=obj.userData.normalMaterial;
+      return;
     }
     const role=obj.userData.thermalRole||'other';
-    let level=role==='floor'?'cold':'cool';
-    if(role==='strip')level=thermalState==='room'?'cool':
-      thermalState==='conduction'?'extreme':'hot';
-    if(role==='sofa')level=thermalState==='radiation'?'hot':
-      thermalState==='convection'?'mild':'cool';
-    if(role==='curtain')level=thermalState==='radiation'?'warm':
-      thermalState==='convection'?'mild':'cool';
-    if(role==='cabinet')level=thermalState==='radiation'?'warm':'cool';
-    if(role==='wall'&&thermalState==='convection')level='mild';
+    let level = role==='floor'?'cold':'cool';
+    // Only the source component receives a noticeable localized temperature change.
+    // Additional surfaces are shown through explicitly placed local overlays.
+    if(role==='strip' && thermalState!=='room')level=
+      thermalState==='conduction'?'mild':'hot';
     obj.material=THERMAL_MATERIALS[level];
   });
 }
@@ -332,19 +362,19 @@ function updateThermalView(){
   const t=THERMAL_SCENES[thermalState];
   thermalOverlay.visible=isThermal;
   heatPlume.visible=isThermal&&thermalState==='convection';
-  ceilingHeat.visible=isThermal&&thermalState==='convection';
+  upperWallHeat.visible=isThermal&&thermalState==='convection';
   radiationPatch.visible=isThermal&&thermalState==='radiation';
-  conductionPatch.visible=isThermal&&thermalState==='conduction';
+  conductionGradient.visible=isThermal&&thermalState==='conduction';
   sourceSpot.visible=isThermal&&thermalState!=='room';
   thermalLabels.source.sprite.visible=isThermal&&thermalState!=='room';
   thermalLabels.air.sprite.visible=isThermal&&thermalState==='convection';
   thermalLabels.surface.sprite.visible=isThermal&&thermalState==='radiation';
-  drawLabel(thermalLabels.source,`Quelle ~${t.source} °C`);
-  drawLabel(thermalLabels.air,`Heißgase ~${t.air} °C`);
-  drawLabel(thermalLabels.surface,`Sofa ~${t.surface} °C`);
+  drawLabel(thermalLabels.source,'Wärmequelle');
+  drawLabel(thermalLabels.air,'Heißgasfahne');
+  drawLabel(thermalLabels.surface,'Bestrahlte Fläche');
   document.querySelector('#thermal-info').hidden=!isThermal;
   document.querySelector('#thermal-explanation').textContent=t.note+
-    ' Beispielwerte, keine Messung oder validierte Simulation.';
+    ' Relative Falschfarben – keine gemessenen Temperaturen, keine echte Wärmebildkamera.';
   applyThermalMaterials();
 }
 function setView(view){
@@ -356,6 +386,7 @@ function setView(view){
   }
   updateThermalView();
   document.querySelector('#view-current').textContent=currentView==='thermal'?'Thermal':'Normal';
+  refreshPanelSummary();
 }
 document.querySelector('#view-normal').addEventListener('click',()=>setView('normal'));
 document.querySelector('#view-thermal').addEventListener('click',()=>setView('thermal'));
@@ -399,18 +430,49 @@ document.querySelector('#rotate-right').addEventListener('click', e => {
 });
 setModelRotation(0);
 
-// Two-finger pinch zoom is an optional convenience. The slider is the reliable fallback.
-let pinchStartDistance=null,pinchStartScale=1;
-const distance=(a,b)=>Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);
-renderer.domElement.addEventListener('touchstart',e=>{
-  if(e.touches.length===2){pinchStartDistance=distance(e.touches[0],e.touches[1]);pinchStartScale=scaleValue;}
-},{passive:true});
-renderer.domElement.addEventListener('touchmove',e=>{
-  if(e.touches.length===2&&pinchStartDistance>0){
-    e.preventDefault();setModelScale(pinchStartScale*distance(e.touches[0],e.touches[1])/pinchStartDistance);
-  }
-},{passive:false});
-renderer.domElement.addEventListener('touchend',e=>{if(e.touches.length<2)pinchStartDistance=null;},{passive:true});
+// One finger rotates (in 3D preview OrbitControls already does this);
+// two fingers pinch the MODEL, not the AR placement root/camera.
+// In WebXR this goes through an interactive DOM overlay after placement.
+const touchDistance=(a,b)=>Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);
+function bindModelGestures(surface, immersive=false) {
+  let startDistance=0, startScale=1, lastX=null;
+  surface.addEventListener('touchstart', e=>{
+    if(immersive && (!renderer.xr.isPresenting || !placed))return;
+    if(e.touches.length===2){
+      startDistance=touchDistance(e.touches[0],e.touches[1]);
+      startScale=scaleValue;
+      lastX=null;
+      if(!immersive)orbit.enabled=false; // don't zoom camera and model at once
+      e.preventDefault();
+    } else if(e.touches.length===1) {
+      lastX=e.touches[0].clientX;
+    }
+  },{passive:false});
+  surface.addEventListener('touchmove',e=>{
+    if(immersive && (!renderer.xr.isPresenting || !placed))return;
+    if(e.touches.length===2){
+      if(startDistance<=0){startDistance=touchDistance(e.touches[0],e.touches[1]);startScale=scaleValue;}
+      e.preventDefault();
+      setModelScale(startScale*touchDistance(e.touches[0],e.touches[1])/startDistance);
+    } else if(immersive && e.touches.length===1 && lastX!==null) {
+      e.preventDefault();
+      const x=e.touches[0].clientX;
+      setModelRotation(THREE.MathUtils.euclideanModulo(modelRotationDegrees+(x-lastX)*0.65,360));
+      lastX=x;
+    }
+  },{passive:false});
+  const end=e=>{
+    if(e.touches.length<2){
+      startDistance=0;
+      if(!immersive&&!renderer.xr.isPresenting)orbit.enabled=true;
+    }
+    lastX=e.touches.length===1?e.touches[0].clientX:null;
+  };
+  surface.addEventListener('touchend',end,{passive:true});
+  surface.addEventListener('touchcancel',end,{passive:true});
+}
+bindModelGestures(renderer.domElement);
+bindModelGestures(UI.gestureSurface,true);
 
 const states = {
   room:{label:'Wohnzimmer',description:'Ausgangssituation: Sofa, Vorhang und elektrische Steckdosenleiste.'},
@@ -437,6 +499,7 @@ function setState(state){
   updateThermalView(); // Thermal is optional; effect visibility remains unchanged
   UI.title.textContent=states[state].label;
   document.querySelector('#scene-current').textContent=states[state].label;
+  refreshPanelSummary();
   UI.description.textContent=states[state].description;
   UI.feedback.hidden=false;
   for(const btn of UI.buttons.children)btn.classList.toggle('active',btn.dataset.mode===state);
@@ -494,6 +557,7 @@ function showPlacementControls(){
 }
 function resetPlacement(){
   placed=false;
+  document.body.classList.remove('xr-placed');
   reticle.visible=false;
   placementRoot.visible=false;
   showPlacementControls();
@@ -509,9 +573,10 @@ function place(){
   placementRoot.quaternion.setFromRotationMatrix(reticle.matrix);
   placementRoot.visible=true;
   placed=true;reticle.visible=false;
+  document.body.classList.add('xr-placed');
   setStatus('Wohnzimmer fixiert · Handy bewegen, um es von allen Seiten anzusehen');
   showPlacementControls();
-  UI.hint.textContent='Effekt auswählen oder Reset drücken, um neu zu platzieren.';
+  UI.hint.textContent='Modell mit einem Finger drehen, mit zwei Fingern vergrößern/verkleinern. Effekt wechseln oder neu platzieren.';
 }
 xrController.addEventListener('select',place);
 placeNowButton.addEventListener('click',e=>{e.stopPropagation();place();});
@@ -529,6 +594,7 @@ document.querySelector('#ar-launch').appendChild(arButton);
 renderer.xr.addEventListener('sessionstart',()=>{
   document.body.classList.add('in-xr');scene.background=null;
   placementRoot.visible=false;placed=false;reticle.visible=false;orbit.enabled=false;
+  document.body.classList.remove('xr-placed');
   showPlacementControls();
   const session=renderer.xr.getSession();
   if(!session?.domOverlayState){
@@ -537,7 +603,7 @@ renderer.xr.addEventListener('sessionstart',()=>{
 });
 renderer.xr.addEventListener('sessionend',()=>{
   hitTestSource?.cancel();hitTestSource=null;requestingHitTest=false;
-  document.body.classList.remove('in-xr');
+  document.body.classList.remove('in-xr','xr-placed');
   placementRoot.visible=true;placed=false;reticle.visible=false;orbit.enabled=true;
   showPlacementControls();
   placementRoot.position.set(0,0,0);placementRoot.quaternion.identity();
