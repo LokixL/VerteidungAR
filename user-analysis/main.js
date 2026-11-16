@@ -2,7 +2,7 @@ import {MAP, CONSTRAINTS} from './data.js';
 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
-const state = {view:'persona',constraint:0,caseStep:0,area:0,mode:'all',zoomIndex:2,original:false,overview:false,auto:null};
+const state = {view:'persona',constraint:0,area:0,mode:'all',zoomIndex:2,original:false,overview:false,auto:null};
 const zoomLevels=[.78,.9,1,1.15,1.3];
 let sceneAPI=null;
 
@@ -56,50 +56,6 @@ $('#play-constraints').addEventListener('click',toggleAuto);
 buildConstraints();
 selectConstraint(0);
 
-
-// --- USE CASE: Chapter 5.4, conceptual firefighter scenario ---
-// Deliberately does NOT claim validated automatic fire detection.
-const CASE_STEPS = [
-  {short:'Initial Situation', title:'Initial Reconnaissance',
-   text:'Eine Feuerwehrkraft beurteilt einen Bereich. Offene Flammen sind nicht sichtbar, und die Situation wirkt zunächst unkritisch.',
-   takeaway:'Eine unauffällige Sichtlage ist nicht automatisch ein Nachweis für die Abwesenheit einer Gefahr.'},
-  {short:'Concealed Hazard', title:'A Possible Hidden Fire',
-   text:'Hinter einer Einrichtung könnte sich eine Brandquelle befinden. Rauch, Gebäudegeometrie oder Gegenstände erschweren die direkte Beobachtung.',
-   takeaway:'Die Lagefeststellung erfolgt unter eingeschränkter Wahrnehmung und mit unvollständigen Informationen.'},
-  {short:'Acoustic Indication', title:'Additional Acoustic Information',
-   text:'Zukünftig könnte RIPLEY auffällige akustische Merkmale als zusätzlichen Hinweis liefern – vorausgesetzt, solche Merkmale werden zuverlässig erkannt.',
-   takeaway:'Dies ist das angestrebte Anwendungskonzept, keine bereits demonstrierte automatische Branddetektion.'},
-  {short:'Situation Assessment', title:'Reassess & Act',
-   text:'Die Einsatzkraft berücksichtigt zusätzliche Hinweise zusammen mit Beobachtung, Kommunikation und etablierten Einsatzverfahren.',
-   takeaway:'RIPLEY soll die Lagefeststellung unterstützen, aber keine taktischen Entscheidungen treffen.'}
-];
-function setCaseStep(index){
-  state.caseStep=Math.max(0,Math.min(CASE_STEPS.length-1,index));
-  const s=CASE_STEPS[state.caseStep];
-  const scene=$('#case-scene');
-  for(let i=0;i<CASE_STEPS.length;i++)scene.classList.remove('case-state-'+i);
-  scene.classList.add('case-state-'+state.caseStep);
-  $('#case-detail-kicker').textContent='STEP '+String(state.caseStep+1).padStart(2,'0')+' / 04';
-  $('#case-detail-title').textContent=s.title;
-  $('#case-detail-text').textContent=s.text;
-  $('#case-detail-takeaway').textContent=s.takeaway;
-  $$('.case-step').forEach((btn,i)=>{
-    let active=i===state.caseStep;
-    btn.classList.toggle('active',active);
-    btn.setAttribute('aria-current',active?'step':'false');
-  });
-  $('#previous-case').disabled=state.caseStep===0;
-  $('#next-case').textContent=state.caseStep===CASE_STEPS.length-1?'Zur Story Map →':'Weiter →';
-}
-$('#case-steps').innerHTML=CASE_STEPS.map((s,i)=>
-  `<button type="button" class="case-step" data-case="${i}" aria-label="Schritt ${i+1}: ${esc(s.short)}"><span class="case-step-index">${String(i+1).padStart(2,'0')}</span><span>${esc(s.short)}</span><span class="case-step-dot">●</span></button>`).join('');
-$$('[data-case]').forEach(btn=>btn.addEventListener('click',()=>setCaseStep(Number(btn.dataset.case))));
-$('#previous-case').addEventListener('click',()=>setCaseStep(state.caseStep-1));
-$('#next-case').addEventListener('click',()=>{
-  if(state.caseStep===CASE_STEPS.length-1)openView('map');
-  else setCaseStep(state.caseStep+1);
-});
-setCaseStep(0);
 
 // --- FULL ORIGINAL USER STORY MAP, chapter 6.8 / Table 7 ---
 function listHtml(items) {return '<ul>'+items.map(x=>`<li>${esc(x)}</li>`).join('')+'</ul>';}
@@ -222,8 +178,8 @@ window.addEventListener('keydown',e=>{
   if(e.key==='1'){e.preventDefault();openView('persona');}
   if(e.key==='2'){e.preventDefault();openView('usecase');}
   if(e.key==='3'){e.preventDefault();openView('map');}
-  if(e.key==='ArrowRight'){e.preventDefault();if(state.view==='persona')selectConstraint(state.constraint+1);else if(state.view==='usecase')setCaseStep(state.caseStep+1);else selectArea(state.area+1);}
-  if(e.key==='ArrowLeft'){e.preventDefault();if(state.view==='persona')selectConstraint(state.constraint-1);else if(state.view==='usecase')setCaseStep(state.caseStep-1);else selectArea(state.area-1);}
+  if(e.key==='ArrowRight'){e.preventDefault();if(state.view==='persona')selectConstraint(state.constraint+1);else selectArea(state.area+1);}
+  if(e.key==='ArrowLeft'){e.preventDefault();if(state.view==='persona')selectConstraint(state.constraint-1);else selectArea(state.area-1);}
   if(e.key===' '&&state.view==='persona'){e.preventDefault();toggleAuto();}
   if(e.key.toLowerCase()==='f'&&!e.repeat)$('#fullscreen').click();
 });

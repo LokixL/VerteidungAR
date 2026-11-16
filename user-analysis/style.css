@@ -67,3 +67,39 @@ body.in-xr #ar-controls button{font-size:12px;min-height:38px}
 @media(max-width:850px){.usecase-layout{display:block}.case-stage{min-height:unset;padding:23px 22px 17px}.case-scene{margin:15px 0}.case-scene svg{max-height:480px}.usecase-panel{border-left:0;border-top:1px solid #63818c55;gap:13px}.case-steps{grid-template-columns:repeat(2,minmax(0,1fr))}.case-stage-title{margin-top:11px}}
 @media(max-width:600px){.app-header{gap:4px}.screen-nav{gap:1px}.nav-tab{font-size:9px;padding:5px 6px;min-height:36px}.nav-tab span{font-size:8px;margin-right:2px}.case-stage{padding:20px 12px 14px}.case-stage-title{font-size:29px}.case-eyebrow{font-size:8px}.case-stage-subtitle{font-size:10px}.case-stage-foot{font-size:8px}.case-scene svg{max-height:380px}.usecase-panel{padding:21px 15px}.usecase-panel h1{font-size:30px}.case-step{font-size:10px;padding:8px;gap:6px}.case-step-index{font-size:9px}.case-detail{min-height:unset}}
 @media(prefers-reduced-motion:reduce){.case-pulse,.flame-a,.flame-b{animation:none!important}}
+
+/* ==== UC-1 · ORIGINAL TABLE 8 - FAITHFUL PRESENTATION === */
+.uc-page{padding:clamp(20px,2.8vw,35px) clamp(15px,3vw,45px) 30px;max-width:1680px;margin:auto;min-height:calc(100dvh - 72px);display:flex;flex-direction:column;gap:21px;background:radial-gradient(ellipse at 55% 17%,#1b3342 0%,transparent 68%)}
+.uc-heading h1{font-size:clamp(27px,3.25vw,44px);letter-spacing:-.042em;line-height:1.08;margin-top:10px}.uc-heading h1 span{color:var(--mint)}
+.uc-heading p{color:#afc5d0;font-size:13px;max-width:870px;margin-top:8px;line-height:1.55}
+.uc-flow{display:grid;grid-template-columns:minmax(0,1fr) 24px minmax(0,1fr) 24px minmax(0,1fr);gap:9px;align-items:center}
+.uc-flow-step{border:1px solid #6c91a357;padding:12px 16px;min-height:70px;background:#193042;border-radius:9px;display:grid;grid-template-columns:auto 1fr;column-gap:11px;align-content:center}
+.uc-flow-step.is-current{background:#1b534a;border:1px solid #79d3ac;box-shadow:0 0 20px #4bbf9420}
+.uc-flow-n{grid-row:span 2;color:#91dec2;font-weight:900;font-size:16px;align-self:center}.uc-flow-step strong{color:#f3fcff;font-size:13px}.uc-flow-step small{font-size:10px;color:#b7cdd6;margin-top:3px}.uc-flow-arrow{text-align:center;color:#89d7c0;font-size:20px;font-weight:900}
+.uc-table-layout{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(268px,.68fr);gap:20px;align-items:start;flex:1}
+.uc-paper{background:#fff;color:#1b2430;border-radius:12px;box-shadow:0 16px 50px #0006;overflow:hidden;border:1px solid #dbe1e5}
+.uc-paper-head{padding:20px 25px 17px;background:#fff}.uc-paper-kicker{font-size:10px;letter-spacing:.12em;color:#78858d;font-weight:800;margin-bottom:7px}
+.uc-paper h2{font-size:clamp(17px,1.45vw,23px);line-height:1.3;letter-spacing:-.016em;color:#243746;font-weight:730}
+.uc-source-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:clamp(12px,1.1vw,15px);line-height:1.4;color:#1b2430}
+.uc-source-table col.uc-field-col{width:27%}.uc-source-table .uc-red-head th{background:#bc5050;color:#fff;text-align:center;font-size:clamp(13px,1.16vw,16px);padding:11px 12px;font-weight:740;letter-spacing:.008em}
+.uc-source-table .uc-blue-head th{background:#194965;color:#f5ffff;text-align:left;padding:9px 14px;font-size:clamp(12px,1.04vw,14px);font-weight:800}
+.uc-source-table .uc-blue-head th:nth-child(2){text-align:left}
+.uc-source-table tbody tr:nth-child(odd){background:#f0f2f7}.uc-source-table tbody tr:nth-child(even){background:#fff}
+.uc-source-table tbody th,.uc-source-table tbody td{padding:11px 14px;text-align:left;vertical-align:top;border-bottom:1px solid #e2e5ec;overflow-wrap:anywhere}
+.uc-source-table tbody th{font-weight:820;color:#273644}
+.uc-source-table ul{padding:0 0 0 15px;margin:0;list-style-type:'–  ';}.uc-source-table li{padding-left:2px}
+.uc-paper-footer{padding:12px 24px;background:#f7f9fb;font-size:10px;color:#61747f;font-weight:640;letter-spacing:.025em}
+.uc-aside{display:flex;flex-direction:column;gap:12px}
+.uc-side-card{background:#1c3647;border:1px solid #648f9b73;border-radius:12px;padding:22px}
+.uc-side-card h3{font-size:clamp(18px,1.8vw,23px);letter-spacing:-.035em;margin:11px 0 12px;line-height:1.25}
+.uc-side-card p{font-size:12px;line-height:1.6;color:#c4d8e1;margin-bottom:15px}
+.uc-points{display:grid;gap:8px}.uc-points>div{display:grid;gap:4px;padding:10px 12px;background:#152a36;border-radius:7px;border:1px solid #6b999752}
+.uc-points span{color:#8be3bf;font-size:9px;letter-spacing:.12em;font-weight:900}.uc-points strong{color:#eef7f9;font-size:11px;line-height:1.4}
+.uc-speaking-note,.uc-original{border-radius:9px;background:#213b4a;border:1px solid #6c9a9b55;padding:11px 14px}
+.uc-speaking-note summary,.uc-original summary{font-size:11px;color:#b9ddda;font-weight:800;cursor:pointer}
+.uc-speaking-note p{font-size:12px;color:#d6e3e8;line-height:1.65;margin-top:11px}
+.uc-original img{display:block;width:100%;margin-top:14px;border-radius:5px;background:white}
+.uc-limitation{color:#b7c6d2;font-size:11px;line-height:1.6;border-left:3px solid #d9b07d;padding:2px 0 2px 12px}
+.uc-limitation strong{color:#f2c28e}.uc-aside>.to-map{width:100%;margin-top:auto}
+@media(max-width:1030px){.uc-table-layout{grid-template-columns:1fr}.uc-aside{display:grid;grid-template-columns:1fr 1fr;gap:12px}.uc-side-card{grid-row:span 3}.uc-aside>.to-map{margin-top:0}.uc-source-table{font-size:14px}}
+@media(max-width:650px){.uc-page{padding:20px 11px 28px;gap:15px}.uc-heading h1{font-size:27px}.uc-heading p{font-size:12px}.uc-flow{grid-template-columns:1fr 12px 1fr 12px 1fr;gap:4px}.uc-flow-step{min-height:76px;padding:8px 5px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:3px}.uc-flow-step strong{font-size:10px}.uc-flow-step small{font-size:8px}.uc-flow-n{font-size:11px}.uc-flow-arrow{font-size:12px}.uc-paper-head{padding:16px 13px 14px}.uc-paper h2{font-size:17px}.uc-paper-kicker{font-size:9px}.uc-source-table{font-size:11px;line-height:1.32}.uc-source-table .uc-blue-head th{font-size:11px;padding:8px}.uc-source-table .uc-red-head th{font-size:12px}.uc-source-table col.uc-field-col{width:35%}.uc-source-table tbody th,.uc-source-table tbody td{padding:9px 8px}.uc-paper-footer{padding:11px;font-size:9px}.uc-aside{display:flex;flex-direction:column}.uc-side-card{padding:17px}}
