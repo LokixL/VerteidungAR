@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1726">
+  <title>RIPLEY | Interactive Experimental Results</title>
+  <meta name="description" content="RIPLEY experimental results with clickable hotspots on original Master thesis figures 79–84.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app" id="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-symbol" aria-hidden="true"><span></span><span></span><span></span></span>
+        <span><strong>RIPLEY</strong><small>EXPERIMENTAL RESULTS · CHAPTER 12</small></span>
+      </div>
+      <div class="header-actions">
+        <button id="overviewBtn" class="header-btn active" type="button">Figures</button>
+        <button id="conclusionBtn" class="header-btn" type="button">Conclusions</button>
+        <button id="fullscreenBtn" class="header-btn header-outline" type="button" title="Fullscreen (F)">⛶ <span class="desktop-label">Present</span></button>
+      </div>
+    </header>
+
+    <section class="intro" id="intro"><div><span class="eyebrow">THE MEASUREMENT PLATFORM</span><h1>What do the recorded signals actually show?</h1><p>Tap a numbered point <strong>directly on the original figure</strong> to explain the observation and its interpretation.</p></div><span class="source-tag">Thesis · Figures 79–84</span></section>
+
+    <div id="figureView">
+      <nav class="figure-navigation" id="figureNavigation" aria-label="Choose a figure"></nav>
+      <main class="workbench">
+        <section class="plot-panel" aria-labelledby="figureHeading">
+          <div class="plot-heading">
+            <div><span class="eyebrow" id="figureCategory"></span><h2 id="figureHeading"></h2><p class="figure-subtitle" id="figureSubtitle"></p></div>
+            <div class="plot-actions"><button type="button" class="small-btn" id="zoomBtn" title="Enlarge the original figure">↗ Enlarge</button></div>
+          </div>
+          <div class="image-card">
+            <div id="plotStage" class="plot-stage" aria-label="Original diagram with interactive hotspots"></div>
+          </div>
+          <p id="figureCaption" class="figure-caption"></p>
+          <div class="hint-row"><span class="pulse-legend" aria-hidden="true"></span> <span>Click the numbered markers directly on the figure</span><span class="shortcut-help">← → figures · ↑ ↓ markers · F fullscreen</span></div>
+        </section>
+        <aside class="notes-panel" aria-label="Figure explanations">
+          <div class="notes-header"><span class="eyebrow">ANNOTATIONS</span><span class="counter" id="pointCount"></span></div>
+          <div id="pointList" class="point-list"></div>
+          <article id="noteCard" class="note-card" aria-live="polite"></article>
+          <div class="key-message"><span class="eyebrow">KEY MESSAGE</span><p id="keyMessage"></p></div>
+          <div class="figure-pagination"><button type="button" id="prevFig" class="nav-btn">← Previous figure</button><button type="button" id="nextFig" class="nav-btn primary">Next figure →</button></div>
+        </aside>
+      </main>
+    </div>
+    <section id="conclusionView" class="conclusion-view" hidden>
+      <div class="conclusion-head"><span class="eyebrow">CHAPTER 13 · CONCLUSIONS & OUTLOOK</span><h2>What can we conclude?</h2><p>The thesis demonstrates a portable research platform. It does not yet validate an operational fire detector.</p></div>
+      <div class="conclusion-cards">
+        <article class="conclusion-card confirmed"><span class="conclusion-number">01 / DEMONSTRATED</span><h3>Technical feasibility</h3><p>A portable prototype was built and operated using passive recording, active stepped-frequency measurements and active deconvolution.</p><p>Repeated acquisition, external excitation verification and reproducible transfer responses support its role as a research platform.</p></article>
+        <article class="conclusion-card observed"><span class="conclusion-number">02 / OBSERVED</span><h3>Fire-related differences</h3><p>In the evaluated gas-fire recording pair, a pronounced passive difference appeared around 6–7 kHz. Active deconvolution showed localized changes near 10.7–10.9 kHz.</p><p>These findings motivate further investigation, but the changes have not been shown to be unique to combustion.</p></article>
+        <article class="conclusion-card future"><span class="conclusion-number">03 / STILL OPEN</span><h3>Validated detection</h3><p>Reliable live classification, warning thresholds, false-alarm rates, missed detections and suitability for emergency operations remain to be demonstrated.</p><p>Future work includes independent recordings, realistic environments, more fire and non-fire conditions, and continued prototype improvement.</p></article>
+      </div>
+      <div class="conclusion-bottom"><strong>Final statement</strong><p>RIPLEY is a working, reproducible acoustic research platform — a basis for the development and validation of future preventive fire detection.</p><button id="backToFigures" class="nav-btn primary" type="button">← Explore the figures</button></div>
+    </section>
+    <footer class="footer"><span>Original figures: RIPLEY Master Thesis · Chapter 12</span><span>Presentation annotations · not additional measurements</span></footer>
+  </div>
+
+  <dialog id="zoomDialog" aria-label="Enlarged source diagram">
+    <div class="zoom-inner"><div class="zoom-top"><div><span class="eyebrow">ORIGINAL FIGURE</span><h3 id="zoomTitle"></h3></div><button id="closeZoom" class="small-btn" type="button">Close ✕</button></div><div class="zoom-scroller"><div class="plot-stage zoom-stage" id="zoomStage"></div></div><div class="zoom-bottom" id="zoomNote"></div></div>
+  </dialog>
+  <script src="data.js"></script><script src="main.js"></script>
+</body>
+</html>
