@@ -9,22 +9,35 @@ app.innerHTML = `
 <div id="stage"></div>
 <div id="overlay">
   <header class="topbar"><div class="brand"><strong>RIPLEY</strong><small>FIRE PHYSICS · AR DEMONSTRATOR</small></div><div id="status" role="status" aria-live="polite">3D-Vorschau bereit</div></header>
+  <div id="gesture-pad" aria-label="Modell mit einem Finger drehen und mit zwei Fingern skalieren"></div>
   <div class="grow"></div>
+  <div id="panel-dock"><span id="scene-pill" aria-live="off">Wood Fire · Combustion</span><button id="panel-toggle" type="button" aria-controls="controls-panel" aria-expanded="true">☰ Menü schließen</button></div>
   <section id="controls-panel" aria-label="Fire Physics Steuerung">
     <details class="control-menu" id="menu-fuel"><summary><span>🔥 Brandquelle</span><span class="current" id="fuel-current">Wood Fire</span><span class="arrow">⌄</span></summary><div class="menu-body"><div class="split"><button id="fuel-wood" class="active" type="button">Wood Fire</button><button id="fuel-gas" type="button">Gas Fire</button></div><p class="tiny">Zwei Brandarten aus den Versuchen der Masterarbeit. Die Darstellung ist schematisch.</p></div></details>
     <details class="control-menu" id="menu-steps"><summary><span>♨ Physikalischer Vorgang</span><span class="current" id="step-current">Combustion</span><span class="arrow">⌄</span></summary><div class="menu-body"><div class="grid" id="steps"></div><div class="row" style="justify-content:space-between;margin-top:8px"><button id="prev" type="button">‹ Zurück</button><span id="step-count" style="font-size:11px;color:#a7cabb">2 / 6</span><button id="next" type="button">Weiter ›</button></div></div></details>
     <details class="control-menu" id="menu-view"><summary><span>◉ Ansicht</span><span class="current" id="view-current">Normal</span><span class="arrow">⌄</span></summary><div class="menu-body"><div class="split"><button id="view-normal" class="active" type="button">Normal</button><button id="view-thermal" type="button">Thermal</button></div><div id="thermal-bar" hidden><strong>Qualitative Thermal View · keine Temperaturmessung</strong><div class="gradient"></div><div class="ticks"><span>kühl</span><span>wärmer</span><span>heiß</span></div><p class="tiny" style="margin-bottom:0">Die Gase im Plume sind schematisch visualisiert; eine echte Thermografiekamera misst sie nicht direkt.</p></div></div></details>
-    <details class="control-menu" id="menu-transform"><summary><span>⤢ Modellsteuerung</span><span class="current">Größe · Drehung</span><span class="arrow">⌄</span></summary><div class="menu-body"><div class="control"><label for="size"><span>Größe</span><strong id="size-value">100 %</strong></label><input id="size" type="range" min="30" max="250" value="100" step="5"></div><div class="control"><label for="rotation"><span>Drehung</span><strong id="rotation-value">0°</strong></label><input id="rotation" type="range" min="0" max="360" value="0" step="5"></div><p class="hint">Android: Start AR → Tisch langsam anvisieren → grünen Kreis antippen.</p></div></details>
+    <details class="control-menu" id="menu-transform"><summary><span>⤢ Modellsteuerung</span><span class="current">Größe · Drehung</span><span class="arrow">⌄</span></summary><div class="menu-body"><div class="control"><label for="size"><span>Größe</span><strong id="size-value">100 %</strong></label><input id="size" type="range" min="30" max="250" value="100" step="5"></div><div class="control"><label for="rotation"><span>Drehung</span><strong id="rotation-value">0°</strong></label><input id="rotation" type="range" min="0" max="360" value="0" step="5"></div><p class="hint">Android: Start AR → Tisch anvisieren → grünen Kreis antippen. Danach: mit einem Finger drehen, mit zwei Fingern Größe verändern.</p></div></details>
     <div id="note" role="status"><button id="close-note" type="button" title="Beschreibung ausblenden">×</button><strong id="note-title">Combustion</strong><div id="note-text"></div></div>
     <div class="panel-actions"><button id="show-note" type="button" hidden>ⓘ Erklärung</button><button id="reset" type="button">↺ Reset</button></div>
   </section>
   <div id="ar-place-actions"><button id="place-now" type="button" hidden>◎ Brandquelle hier platzieren</button><button id="place-again" type="button" hidden>↺ Neu platzieren</button></div>
   <div id="ar-launch"></div>
 </div>
-<a id="demo-nav" href="../index.html">← Wohnzimmer-Demo</a>`;
+<a id="demo-nav" href="../index.html">← RIPLEY-Übersicht</a>`;
 
 const $=s=>document.querySelector(s);
 const setStatus=s=>{$('#status').textContent=s;};
+// Vollständig einklappbares Steuerpanel; auf Touch-Geräten startet es platzsparend.
+let panelOpen = !window.matchMedia('(pointer: coarse)').matches;
+function setPanelOpen(open){
+  panelOpen=Boolean(open);
+  $('#controls-panel').hidden=!panelOpen;
+  $('#panel-toggle').setAttribute('aria-expanded',String(panelOpen));
+  $('#panel-toggle').textContent=panelOpen?'✕ Menü schließen':'☰ Menü';
+  $('#scene-pill').hidden=panelOpen;
+}
+$('#panel-toggle').addEventListener('click',()=>setPanelOpen(!panelOpen));
+setPanelOpen(panelOpen);
 for(const menu of document.querySelectorAll('details.control-menu'))menu.addEventListener('toggle',()=>{if(menu.open)for(const other of document.querySelectorAll('details.control-menu'))if(other!==menu)other.open=false;});
 const states=[
   {id:'initial',name:'Ausgangszustand',wood:'Holz ohne Flamme: Ausgangstemperatur und unveränderte Struktur.',gas:'Gasbrenner vor Zündung: Noch keine Flamme oder aufsteigender Heißgasstrom.'},
@@ -141,6 +154,7 @@ function updateScene(){
  heatRoot.visible=state.step==='heat';
  glow.intensity=initial?0:state.fuel==='gas'?.45:.85;
  $('#fuel-current').textContent=state.fuel==='wood'?'Wood Fire':'Gas Fire';$('#step-current').textContent=stage.name;$('#view-current').textContent=state.view==='thermal'?'Thermal':'Normal';
+  $('#scene-pill').textContent=`${state.fuel==='wood'?'Wood Fire':'Gas Fire'} · ${stage.name}`;
  $('#fuel-wood').classList.toggle('active',state.fuel==='wood');$('#fuel-gas').classList.toggle('active',state.fuel==='gas');
  $('#view-normal').classList.toggle('active',state.view==='normal');$('#view-thermal').classList.toggle('active',state.view==='thermal');
  $('#thermal-bar').hidden=state.view!=='thermal';
@@ -160,22 +174,84 @@ $('#show-note').addEventListener('click',()=>{$('#note').hidden=false;$('#show-n
 function updateTransform(){contentRoot.scale.setScalar(state.scale);contentRoot.rotation.y=state.angle*Math.PI/180;$('#size-value').textContent=Math.round(state.scale*100)+' %';$('#rotation-value').textContent=Math.round(state.angle)+'°';$('#size').value=Math.round(state.scale*100);$('#rotation').value=state.angle;}
 $('#size').addEventListener('input',e=>{state.scale=Number(e.target.value)/100;updateTransform();});
 $('#rotation').addEventListener('input',e=>{state.angle=Number(e.target.value);updateTransform();});
+
+// Touch-Gesten für dasselbe 3D-Modell: ein Finger dreht, zwei Finger skalieren.
+// In der 3D-Vorschau nehmen wir Touch-Ereignisse VOR OrbitControls entgegen;
+// Mausbedienung/OrbitControls bleiben damit erhalten. Im AR-Modus verwendet
+// das platzierte Modell das transparente WebXR-DOM-Overlay-Gestenfeld.
+const activeTouches=new Map();
+let pinchReference=null;
+function clearGesture(){activeTouches.clear();pinchReference=null;}
+const distanceBetweenTouches=()=>{
+  const [a,b]=[...activeTouches.values()];
+  return Math.hypot(a.x-b.x,a.y-b.y);
+};
+function gesturePointerDown(e){
+  if(e.pointerType!=='touch')return;
+  if(e.currentTarget===renderer.domElement&&renderer.xr.isPresenting)return;
+  if(e.currentTarget===$('#gesture-pad')&&(!renderer.xr.isPresenting||!placed))return;
+  e.preventDefault();e.stopImmediatePropagation();
+  activeTouches.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  try{e.currentTarget.setPointerCapture(e.pointerId);}catch(_){}
+  if(activeTouches.size>=2){
+    pinchReference={distance:Math.max(distanceBetweenTouches(),10),scale:state.scale};
+  }
+}
+function gesturePointerMove(e){
+  if(!activeTouches.has(e.pointerId))return;
+  e.preventDefault();e.stopImmediatePropagation();
+  const old=activeTouches.get(e.pointerId);
+  activeTouches.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(activeTouches.size>=2){
+    if(!pinchReference)pinchReference={distance:Math.max(distanceBetweenTouches(),10),scale:state.scale};
+    const factor=distanceBetweenTouches()/pinchReference.distance;
+    state.scale=THREE.MathUtils.clamp(pinchReference.scale*factor,.3,2.5);
+    updateTransform();
+  }else{
+    state.angle=(state.angle+(e.clientX-old.x)*.55+360)%360;
+    updateTransform();
+  }
+}
+function gesturePointerEnd(e){
+  if(!activeTouches.has(e.pointerId))return;
+  e.preventDefault();e.stopImmediatePropagation();
+  activeTouches.delete(e.pointerId);
+  if(activeTouches.size<2)pinchReference=null;
+  if(activeTouches.size===2)pinchReference={distance:Math.max(distanceBetweenTouches(),10),scale:state.scale};
+  try{e.currentTarget.releasePointerCapture(e.pointerId);}catch(_){}
+}
+for(const touchSurface of [renderer.domElement,$('#gesture-pad')]){
+  touchSurface.addEventListener('pointerdown',gesturePointerDown,{capture:true});
+  touchSurface.addEventListener('pointermove',gesturePointerMove,{capture:true});
+  touchSurface.addEventListener('pointerup',gesturePointerEnd,{capture:true});
+  touchSurface.addEventListener('pointercancel',gesturePointerEnd,{capture:true});
+  touchSurface.addEventListener('lostpointercapture',e=>{activeTouches.delete(e.pointerId);if(activeTouches.size<2)pinchReference=null;},{capture:true});
+}
 function reset(){state.fuel='wood';state.step='combustion';state.view='normal';state.scale=1;state.angle=0;updateTransform();updateScene();if(renderer.xr.isPresenting)resetPlacement();else{placementRoot.position.set(0,0,0);placementRoot.quaternion.identity();setStatus('3D-Vorschau zurückgesetzt');}}
 $('#reset').addEventListener('click',reset);
 updateTransform();updateScene();
 // WebXR hit-test: placement remains independent from the selected step, fuel and view.
 const reticle=new THREE.Mesh(new THREE.RingGeometry(.065,.085,48).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:'#62ffb9',side:THREE.DoubleSide}));reticle.matrixAutoUpdate=false;reticle.visible=false;scene.add(reticle);
 let placed=false,hitTestSource=null,requestingHitTest=false;
+// Transparentes Touch-Feld ausschließlich NACH der AR-Platzierung aktivieren:
+// davor muss ein normaler Tap weiterhin den grünen Platzierungskreis auswählen können.
+function updateGesturePad(){
+  const session=renderer.xr.getSession();
+  const enabled=renderer.xr.isPresenting&&placed&&Boolean(session?.domOverlayState);
+  const pad=$('#gesture-pad');
+  const next=enabled?'auto':'none';
+  if(pad.style.pointerEvents!==next){pad.style.pointerEvents=next;if(!enabled)clearGesture();}
+}
 const controller=renderer.xr.getController(0);scene.add(controller);
-function updatePlaceButtons(){const ar=renderer.xr.isPresenting;$('#place-now').hidden=!ar||placed||!reticle.visible;$('#place-again').hidden=!ar||!placed;}
+function updatePlaceButtons(){const ar=renderer.xr.isPresenting;$('#place-now').hidden=!ar||placed||!reticle.visible;$('#place-again').hidden=!ar||!placed;updateGesturePad();}
 function resetPlacement(){placed=false;placementRoot.visible=false;reticle.visible=false;setStatus('Tisch anvisieren – grüner Kreis erscheint');updatePlaceButtons();}
 function place(){if(!renderer.xr.isPresenting||placed||!reticle.visible)return;placementRoot.position.setFromMatrixPosition(reticle.matrix);placementRoot.quaternion.setFromRotationMatrix(reticle.matrix);placementRoot.visible=true;placed=true;reticle.visible=false;setStatus('Brandquelle platziert');updatePlaceButtons();}
 controller.addEventListener('select',place);
 $('#place-now').addEventListener('click',e=>{e.stopPropagation();place();});
 $('#place-again').addEventListener('click',e=>{e.stopPropagation();resetPlacement();});
-$('#overlay').addEventListener('beforexrselect',e=>{if(e.target.closest('button,summary,details,#controls-panel,#ar-launch,#ar-place-actions'))e.preventDefault();});
+$('#overlay').addEventListener('beforexrselect',e=>{if(e.target.closest('button,summary,details,#controls-panel,#panel-dock,#ar-launch,#ar-place-actions,#gesture-pad'))e.preventDefault();});
 const arButton=ARButton.createButton(renderer,{requiredFeatures:['hit-test'],optionalFeatures:['dom-overlay'],domOverlay:{root:$('#overlay')}});$('#ar-launch').appendChild(arButton);
-renderer.xr.addEventListener('sessionstart',()=>{document.body.classList.add('in-xr');scene.background=null;orbit.enabled=false;resetPlacement();if(!renderer.xr.getSession()?.domOverlayState)setStatus('AR aktiv; DOM Overlay nicht verfügbar (Steuerung evtl. unsichtbar)');});
+renderer.xr.addEventListener('sessionstart',()=>{document.body.classList.add('in-xr');scene.background=null;orbit.enabled=false;setPanelOpen(false);resetPlacement();if(!renderer.xr.getSession()?.domOverlayState)setStatus('AR aktiv; DOM Overlay nicht verfügbar (Steuerung evtl. unsichtbar)');});
 renderer.xr.addEventListener('sessionend',()=>{hitTestSource?.cancel();hitTestSource=null;requestingHitTest=false;document.body.classList.remove('in-xr');scene.background=new THREE.Color('#172637');orbit.enabled=true;placed=false;reticle.visible=false;placementRoot.visible=true;placementRoot.position.set(0,0,0);placementRoot.quaternion.identity();updatePlaceButtons();setStatus('3D-Vorschau bereit');});
 async function requestHitTest(session){if(hitTestSource||requestingHitTest)return;requestingHitTest=true;try{const viewer=await session.requestReferenceSpace('viewer');if(renderer.xr.getSession()!==session)return;const source=await session.requestHitTestSource({space:viewer});if(renderer.xr.getSession()===session)hitTestSource=source;else source.cancel();}catch(e){setStatus('Flächenerkennung nicht verfügbar: '+e.message);}finally{requestingHitTest=false;}}
 const clock=new THREE.Clock();
