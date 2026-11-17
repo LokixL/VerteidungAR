@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { installModelHeight, installDemoNavigation } from '../shared/ripley-controls.js';
 import { ARButton } from 'three/addons/webxr/ARButton.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
@@ -14,7 +15,12 @@ app.innerHTML = `
   <div id="panel-dock"><span id="scene-pill" aria-live="off">Wood Fire · Combustion</span><button id="panel-toggle" type="button" aria-controls="controls-panel" aria-expanded="true">☰ Menü schließen</button></div>
   <section id="controls-panel" aria-label="Fire Physics Steuerung">
     <details class="control-menu" id="menu-fuel"><summary><span>🔥 Brandquelle</span><span class="current" id="fuel-current">Wood Fire</span><span class="arrow">⌄</span></summary><div class="menu-body"><div class="split"><button id="fuel-wood" class="active" type="button">Wood Fire</button><button id="fuel-gas" type="button">Gas Fire</button></div><p class="tiny">Zwei Brandarten aus den Versuchen der Masterarbeit. Die Darstellung ist schematisch.</p></div></details>
-    <details class="control-menu" id="menu-steps"><summary><span>♨ Physikalischer Vorgang</span><span class="current" id="step-current">Combustion</span><span class="arrow">⌄</span></summary><div class="menu-body"><div class="grid" id="steps"></div><div class="row" style="justify-content:space-between;margin-top:8px"><button id="prev" type="button">‹ Zurück</button><span id="step-count" style="font-size:11px;color:#a7cabb">2 / 6</span><button id="next" type="button">Weiter ›</button></div></div></details>
+    <details class="control-menu" id="menu-steps"><summary><span>♨ Physikalischer Vorgang</span><span class="current" id="step-current">Combustion</span><span class="arrow">⌄</span></summary><div class="menu-body"><div class="grid" id="steps"></div>
+      <div class="ripley-coupling">
+        <div class="ripley-coupling-line" id="coupling-flow">Holz → Pyrolysis → Gase → Combustion → Heat Feedback ↺</div>
+        <button id="coupling-toggle" type="button" aria-pressed="true" class="active">↻ Zusammenhänge: Ein</button>
+        <p>Abbildung 2: Wärme der Flamme unterstützt weitere Pyrolyse. Die Phänomene laufen gleichzeitig; die Auswahl hebt einen Aspekt hervor.</p>
+      </div><div class="row" style="justify-content:space-between;margin-top:8px"><button id="prev" type="button">‹ Zurück</button><span id="step-count" style="font-size:11px;color:#a7cabb">2 / 6</span><button id="next" type="button">Weiter ›</button></div></div></details>
     <details class="control-menu" id="menu-view"><summary><span>◉ Ansicht</span><span class="current" id="view-current">Normal</span><span class="arrow">⌄</span></summary><div class="menu-body"><div class="split"><button id="view-normal" class="active" type="button">Normal</button><button id="view-thermal" type="button">Thermal</button></div><div id="thermal-bar" hidden><strong>Qualitative Thermal View · keine Temperaturmessung</strong><div class="gradient"></div><div class="ticks"><span>kühl</span><span>wärmer</span><span>heiß</span></div><p class="tiny" style="margin-bottom:0">Die Gase im Plume sind schematisch visualisiert; eine echte Thermografiekamera misst sie nicht direkt.</p></div></div></details>
     <details class="control-menu" id="menu-transform"><summary><span>⤢ Modellsteuerung</span><span class="current">Größe · Drehung</span><span class="arrow">⌄</span></summary><div class="menu-body"><div class="control"><label for="size"><span>Größe</span><strong id="size-value">100 %</strong></label><input id="size" type="range" min="30" max="250" value="100" step="5"></div><div class="control"><label for="rotation"><span>Drehung</span><strong id="rotation-value">0°</strong></label><input id="rotation" type="range" min="0" max="360" value="0" step="5"></div><p class="hint">Android: Start AR → Tisch anvisieren → grünen Kreis antippen. Danach: mit einem Finger drehen, mit zwei Fingern Größe verändern.</p></div></details>
     <div id="note" role="status"><button id="close-note" type="button" title="Beschreibung ausblenden">×</button><strong id="note-title">Combustion</strong><div id="note-text"></div></div>
@@ -28,7 +34,7 @@ app.innerHTML = `
 const $=s=>document.querySelector(s);
 const setStatus=s=>{$('#status').textContent=s;};
 // Vollständig einklappbares Steuerpanel; auf Touch-Geräten startet es platzsparend.
-let panelOpen = !window.matchMedia('(pointer: coarse)').matches;
+let panelOpen = false;
 function setPanelOpen(open){
   panelOpen=Boolean(open);
   $('#controls-panel').hidden=!panelOpen;
@@ -40,14 +46,14 @@ $('#panel-toggle').addEventListener('click',()=>setPanelOpen(!panelOpen));
 setPanelOpen(panelOpen);
 for(const menu of document.querySelectorAll('details.control-menu'))menu.addEventListener('toggle',()=>{if(menu.open)for(const other of document.querySelectorAll('details.control-menu'))if(other!==menu)other.open=false;});
 const states=[
-  {id:'initial',name:'Ausgangszustand',wood:'Holz ohne Flamme: Ausgangstemperatur und unveränderte Struktur.',gas:'Gasbrenner vor Zündung: Noch keine Flamme oder aufsteigender Heißgasstrom.'},
+  {id:'initial',name:'Ausgangszustand',wood:'Holz vor dem Aufheizen: keine Pyrolyse und keine Flammenverbrennung.',gas:'Gasbrenner vor Zündung: Noch keine Flamme oder aufsteigender Heißgasstrom.'},
   {id:'combustion',name:'Combustion',wood:'Flüchtige Pyrolysegase mischen sich mit Sauerstoff und verbrennen oberhalb des Holzes.',gas:'Gasförmiger Brennstoff reagiert mit Sauerstoff. Die Flamme zeigt die exotherme Gasphasenreaktion.'},
   {id:'pyrolysis',name:'Pyrolysis',wood:'Das erhitzte Holz zersetzt sich: Flüchtige Gase steigen auf und eine verkohlte Schicht entsteht. Pyrolyse ist nicht gleich Flammenverbrennung.',gas:'Für bereits gasförmig zugeführten Brennstoff ist keine Pyrolyse eines festen Brennstoffs nötig. Es wird deshalb keine Holzpyrolyse simuliert.'},
   {id:'heat',name:'Heat Transfer',wood:'Wärmestrahlung, Konvektion und Wärmeleitung wirken zusammen. Der Wärmerückfluss auf das Holz unterstützt weitere Pyrolyse.',gas:'Strahlung der Flamme, aufsteigende Heißgase und Wärmeleitung in der Brennerstruktur transportieren Energie.'},
   {id:'plume',name:'Fire Plume',wood:'Auftrieb lässt die heißen Verbrennungsgase steigen. Seitlich strömt kühlere Umgebungsluft ein (Entrainment).',gas:'Die aufsteigenden heißen Gase bilden einen Plume. Eingemischte Umgebungsluft führt zu räumlich variierender Temperatur und Strömung.'},
   {id:'smoke',name:'Smoke',wood:'Partikel und gasförmige Produkte aus Pyrolyse und Verbrennung werden im Plume transportiert. Die Rauchmenge hängt von den Bedingungen ab.',gas:'Bei gut durchmischter, sauberer Gasverbrennung ist wenig sichtbarer Rußrauch zu erwarten. Es entstehen trotzdem gasförmige Verbrennungsprodukte.'}
 ];
-const state={fuel:'wood',step:'combustion',view:'normal',scale:1,angle:0};
+const state={fuel:'wood',step:'combustion',view:'normal',scale:1,angle:0,coupled:true};
 const scene=new THREE.Scene();scene.background=new THREE.Color('#172637');
 scene.add(new THREE.HemisphereLight(0xe1f3ff,0x536478,2.0));
 const sun=new THREE.DirectionalLight(0xffffff,2.4);sun.position.set(1,2.5,1.5);scene.add(sun);
@@ -57,7 +63,10 @@ const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});renderer.xr.
 const orbit=new OrbitControls(camera,renderer.domElement);orbit.target.set(0,0.17,0);orbit.enableDamping=true;
 // Move placementRoot ONLY when a verified hit-test pose is selected. Never parent it to XR camera.
 const placementRoot=new THREE.Group();scene.add(placementRoot);
-const contentRoot=new THREE.Group();placementRoot.add(contentRoot);
+const contentRoot=new THREE.Group();
+// Verschiebt nur die 3D-Gruppe, nicht Kamera oder WebXR-Tischanker.
+installModelHeight({root:contentRoot,mount:'#menu-transform .menu-body'});
+installDemoNavigation({homeHref:'../'});placementRoot.add(contentRoot);
 const modelRoot=new THREE.Group();contentRoot.add(modelRoot);
 const effects=new THREE.Group();contentRoot.add(effects);
 const labelRoot=new THREE.Group();contentRoot.add(labelRoot);
@@ -147,11 +156,15 @@ function updateLabels(){mainLabel.visible=state.step==='combustion';noteLabel.vi
 function updateScene(){
  const stage=states.find(x=>x.id===state.step),initial=state.step==='initial';
  woodRoot.visible=state.fuel==='wood';gasRoot.visible=state.fuel==='gas';
- flameRoot.visible=['combustion','heat','plume','smoke'].includes(state.step);
+ // Figure 2: Prozesse sind gekoppelt, nicht strikt zeitlich getrennt.
+ // Bei aktivierter Kopplung bleibt die Flamme sichtbar und liefert Wärme für
+ // weitere Pyrolyse; nur der ausgewählte Mechanismus wird stärker betont.
+ flameRoot.visible=!initial&&(state.coupled||['combustion','heat','plume','smoke'].includes(state.step));
  smokeRoot.visible=state.step==='smoke'&&state.fuel==='wood';
- pyroRoot.visible=state.step==='pyrolysis'&&state.fuel==='wood';
- plumeRoot.visible=state.step==='plume'||state.step==='smoke';
- heatRoot.visible=state.step==='heat';
+ pyroRoot.visible=!initial&&state.fuel==='wood'&&(state.coupled||state.step==='pyrolysis');
+ plumeRoot.visible=!initial&&(state.step==='plume'||state.step==='smoke'||(state.coupled&&state.step==='combustion'));
+ for(const ar of arrows) ar.visible=state.step==='plume'||state.step==='smoke';
+ heatRoot.visible=state.step==='heat'||(state.coupled&&state.fuel==='wood'&&state.step==='pyrolysis');
  glow.intensity=initial?0:state.fuel==='gas'?.45:.85;
  $('#fuel-current').textContent=state.fuel==='wood'?'Wood Fire':'Gas Fire';$('#step-current').textContent=stage.name;$('#view-current').textContent=state.view==='thermal'?'Thermal':'Normal';
   $('#scene-pill').textContent=`${state.fuel==='wood'?'Wood Fire':'Gas Fire'} · ${stage.name}`;
@@ -162,6 +175,10 @@ function updateScene(){
  const idx=states.findIndex(x=>x.id===state.step);$('#step-count').textContent=`${idx+1} / ${states.length}`;$('#prev').disabled=idx===0;$('#next').disabled=idx===states.length-1;
  $('#note-title').textContent=stage.name;$('#note-text').textContent=state.fuel==='gas'?stage.gas:stage.wood;
  $('#note').hidden=false;$('#show-note').hidden=true;
+ $('#coupling-flow').textContent=state.fuel==='wood'?'Holz → Pyrolysis → Gase → Combustion → Heat Feedback ↺':'Gas + Sauerstoff → Combustion → Heat Transfer / Plume';
+ $('#coupling-toggle').classList.toggle('active',state.coupled);
+ $('#coupling-toggle').setAttribute('aria-pressed',String(state.coupled));
+ $('#coupling-toggle').textContent=state.coupled?'↻ Zusammenhänge: Ein':'◉ Einzelansicht: Ein';
  updateLabels();colorize();
 }
 for(const [id,v] of [['fuel-wood','wood'],['fuel-gas','gas']])$('#'+id).addEventListener('click',()=>{state.fuel=v;updateScene();});
@@ -169,6 +186,7 @@ for(const [id,v] of [['view-normal','normal'],['view-thermal','thermal']])$('#'+
 for(const s of states){const b=document.createElement('button');b.type='button';b.dataset.step=s.id;b.textContent=s.name;b.addEventListener('click',()=>{state.step=s.id;updateScene();});$('#steps').appendChild(b);}
 $('#prev').addEventListener('click',()=>{const i=states.findIndex(s=>s.id===state.step);state.step=states[Math.max(0,i-1)].id;updateScene();});
 $('#next').addEventListener('click',()=>{const i=states.findIndex(s=>s.id===state.step);state.step=states[Math.min(states.length-1,i+1)].id;updateScene();});
+$('#coupling-toggle').addEventListener('click',()=>{state.coupled=!state.coupled;updateScene();});
 $('#close-note').addEventListener('click',()=>{$('#note').hidden=true;$('#show-note').hidden=false;});
 $('#show-note').addEventListener('click',()=>{$('#note').hidden=false;$('#show-note').hidden=true;});
 function updateTransform(){contentRoot.scale.setScalar(state.scale);contentRoot.rotation.y=state.angle*Math.PI/180;$('#size-value').textContent=Math.round(state.scale*100)+' %';$('#rotation-value').textContent=Math.round(state.angle)+'°';$('#size').value=Math.round(state.scale*100);$('#rotation').value=state.angle;}
@@ -227,7 +245,7 @@ for(const touchSurface of [renderer.domElement,$('#gesture-pad')]){
   touchSurface.addEventListener('pointercancel',gesturePointerEnd,{capture:true});
   touchSurface.addEventListener('lostpointercapture',e=>{activeTouches.delete(e.pointerId);if(activeTouches.size<2)pinchReference=null;},{capture:true});
 }
-function reset(){state.fuel='wood';state.step='combustion';state.view='normal';state.scale=1;state.angle=0;updateTransform();updateScene();if(renderer.xr.isPresenting)resetPlacement();else{placementRoot.position.set(0,0,0);placementRoot.quaternion.identity();setStatus('3D-Vorschau zurückgesetzt');}}
+function reset(){state.fuel='wood';state.step='combustion';state.view='normal';state.coupled=true;state.scale=1;state.angle=0;updateTransform();updateScene();if(renderer.xr.isPresenting)resetPlacement();else{placementRoot.position.set(0,0,0);placementRoot.quaternion.identity();setStatus('3D-Vorschau zurückgesetzt');}}
 $('#reset').addEventListener('click',reset);
 updateTransform();updateScene();
 // WebXR hit-test: placement remains independent from the selected step, fuel and view.
@@ -261,9 +279,9 @@ renderer.setAnimationLoop((_timestamp,frame)=>{
  const isWood=state.fuel==='wood';
  for(const flame of flames){const i=flame.userData.index;flame.scale.set(1+Math.sin(t*6+i)*.19,.76+Math.sin(t*8+i*1.3)*.17,1+Math.cos(t*5+i)*.12);flame.position.y=.17+.015*Math.sin(t*8+i);flame.material.color.set(state.view==='thermal'?'#fff1bc':isWood?'#ff9c2d':'#398ffb');}
  for(const ember of woodRoot.children)if(ember.userData.ember)ember.scale.setScalar(.8+Math.sin(t*7+ember.position.x*30)*.22);
- for(const p of pyro){const i=p.userData.index,phase=(t*.26+i/pyro.length)%1,a=i*2.3999;p.position.set(Math.cos(a)*(.04+.02*phase),.11+phase*.2,Math.sin(a)*(.04+.02*phase));p.material.opacity=.65*(1-phase);p.scale.setScalar(.7+phase);}
+ for(const p of pyro){const i=p.userData.index,phase=(t*.26+i/pyro.length)%1,a=i*2.3999;p.position.set(Math.cos(a)*(.04+.02*phase),.11+phase*.2,Math.sin(a)*(.04+.02*phase));p.material.opacity=.65*(1-phase)*(state.step==='pyrolysis'?1:.35);p.scale.setScalar(.7+phase);}
  for(const p of woodSmoke){const i=p.userData.index,phase=(t*.11+i/woodSmoke.length)%1,a=i*2.3999;p.position.set(Math.cos(a+t*.18)*(.02+phase*.14),.17+phase*.43,Math.sin(a+t*.18)*(.02+phase*.13));p.material.opacity=(.08+.24*(1-phase))*(isWood?1:.05);p.scale.setScalar(.6+phase*1.9);}
- for(const p of plumeParticles){const i=p.userData.index,phase=(t*.14+i/plumeParticles.length)%1,a=i*2.3999,r=.025+phase*.16;p.position.set(Math.cos(a+t*.4)*r,.12+.54*phase,Math.sin(a+t*.3)*r);p.scale.setScalar(.7+phase*1.8);p.material.opacity=.21*(1-phase);}
+ for(const p of plumeParticles){const i=p.userData.index,phase=(t*.14+i/plumeParticles.length)%1,a=i*2.3999,r=.025+phase*.16;p.position.set(Math.cos(a+t*.4)*r,.12+.54*phase,Math.sin(a+t*.3)*r);p.scale.setScalar(.7+phase*1.8);p.material.opacity=.21*(1-phase)*(state.step==='plume'||state.step==='smoke'?1:.33);}
  for(const a of arrows){const i=a.userData.index,phase=(t*.35+i/arrows.length)%1,az=i*2*Math.PI/arrows.length,r=.14+.02*Math.sin(t+i);a.position.set(r*Math.cos(az)*(1-phase*.6),.09+.36*phase,r*Math.sin(az)*(1-phase*.6));a.rotation.set(0,0,i%2?Math.PI/4:-Math.PI/4);a.scale.setScalar(.8+phase*.2);}
  for(const r of radiation){const i=r.userData.index;r.material.opacity=.25+.45*(1-((t*.4+i/5)%1));}
  for(const p of conduct){const i=p.userData.index,phase=(t*.38+i/conduct.length)%1,a=i*2*Math.PI/conduct.length;p.position.set(.06*Math.cos(a)*phase,.035+.025*(1-phase),.06*Math.sin(a)*phase);p.material.opacity=.7*(1-phase);}

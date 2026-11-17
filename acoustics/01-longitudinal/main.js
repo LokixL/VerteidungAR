@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { installModelHeight, installDemoNavigation, installModelGestures } from '../../shared/ripley-controls.js';
 import { ARButton } from 'three/addons/webxr/ARButton.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
@@ -25,7 +26,7 @@ app.innerHTML = `
     <div id="menu-toggle-row">
       <button id="panel-toggle" type="button" aria-controls="controls-panel" aria-expanded="false">☰ Menü</button>
     </div>
-    <section id="controls-panel" aria-label="Akustik-Demonstration">
+    <section id="controls-panel" hidden aria-label="Akustik-Demonstration">
       <details class="control-menu" id="menu-medium">
         <summary><span>◈ Medium</span><span class="menu-current" id="medium-current">Luft</span><span class="arrow">⌄</span></summary>
         <div class="menu-body">
@@ -158,7 +159,7 @@ for (const menu of document.querySelectorAll('details.control-menu')) {
   });
 }
 $('#overlay').addEventListener('beforexrselect', e => {
-  if (e.target.closest('button, summary, input, a, #controls-panel, #ar-launch')) e.preventDefault();
+  if (e.target.closest('button, summary, input, a, #controls-panel, #ar-launch, #ripley-gesture-pad')) e.preventDefault();
 });
 
 // --- 3D / Desktop and WebXR share the same scene ---
@@ -213,6 +214,9 @@ orbit.maxDistance = 3.6;
 const placementRoot = new THREE.Group();
 scene.add(placementRoot);
 const contentRoot = new THREE.Group();
+// Verschiebt nur die 3D-Gruppe, nicht Kamera oder WebXR-Tischanker.
+installModelHeight({root:contentRoot,mount:'#menu-measure .menu-body'});
+installDemoNavigation({homeHref:'../../',sectionHref:'../'});
 placementRoot.add(contentRoot);
 const displayRoot = new THREE.Group();
 contentRoot.add(displayRoot);
@@ -463,7 +467,12 @@ const arButton=ARButton.createButton(renderer,{
   domOverlay:{root:$('#overlay')}
 });
 $('#ar-launch').appendChild(arButton);
-enablePinchScaling();
+const ripleyGestures=installModelGestures({
+  renderer,controller:xrController,isPlaced:()=>placed,
+  getScale:()=>state.scale,setScale:v=>{state.scale=v;$('#size-slider').value=Math.round(v*100);updateTransform();},
+  getAngle:()=>state.rotation,setAngle:v=>{state.rotation=v;$('#rotation-slider').value=Math.round(v);updateTransform();},
+  minScale:.3,maxScale:2.5
+});
 renderer.xr.addEventListener('sessionstart',()=>{
   document.body.classList.add('in-xr');scene.background=null;
   orbit.enabled=false;resetPlacement();

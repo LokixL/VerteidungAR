@@ -15,3 +15,19 @@
 #stage canvas{touch-action:none}
 @media (orientation:landscape) and (max-height:650px){#panel-dock{width:min(360px,47vw);margin:0 0 5px auto}#panel-toggle{min-height:32px;padding:5px 11px}#scene-pill{font-size:10px;max-width:24vw}}
 @media (max-width:420px){#panel-toggle{min-height:40px}#scene-pill{font-size:10px}}
+
+
+/* Unified tablet dock: starts collapsed and stays at the bottom right. */
+#panel-dock {position:fixed !important;top:auto !important;bottom:max(12px,env(safe-area-inset-bottom) + 12px) !important;right:max(10px,env(safe-area-inset-right)) !important;left:auto !important;width:auto !important;margin:0 !important;z-index:22 !important;}
+#panel-toggle{border-radius:999px !important;min-width:102px;min-height:46px;padding:10px 14px;font-size:13px;}
+#scene-pill{display:none !important;}
+#controls-panel{position:fixed !important;top:auto !important;bottom:max(66px,env(safe-area-inset-bottom) + 66px) !important;right:max(10px,env(safe-area-inset-right)) !important;left:auto !important;transform:none !important;width:min(375px,calc(100vw - 20px)) !important;max-height:min(76dvh,640px) !important;margin:0 !important;z-index:21 !important;}
+#controls-panel[hidden]{display:none!important;}
+#ar-place-actions,#ar-launch{justify-content:flex-start !important;align-self:flex-start !important;}
+#ar-launch button{min-height:46px!important;}
+#steps button{min-height:44px;}
+@media(orientation:landscape) and (max-height:650px){#panel-dock{bottom:max(8px,env(safe-area-inset-bottom) + 8px)!important;}#controls-panel{bottom:max(60px,env(safe-area-inset-bottom) + 60px)!important;max-height:calc(100dvh - 72px)!important;width:min(370px,45vw)!important;}}
+.ripley-coupling{margin-top:11px;border-radius:10px;padding:10px;border:1px solid rgba(127,241,189,.25);background:rgba(17,47,48,.65);}
+.ripley-coupling-line{font-size:11px;line-height:1.6;font-weight:650;color:#d5ffe7;}
+.ripley-coupling button{margin-top:7px;min-height:44px;width:100%;font-size:12px;}
+.ripley-coupling p{margin:7px 0 0;font-size:11px;line-height:1.42;color:#bfd3d1;}

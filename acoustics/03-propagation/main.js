@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { installModelHeight, installDemoNavigation, installModelGestures } from '../../shared/ripley-controls.js';
 import { ARButton } from 'three/addons/webxr/ARButton.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
@@ -19,7 +20,7 @@ $('#app').innerHTML = `
   <div class="scene-label" id="scene-label">REFLECTION · SCHALLWELLEN AN EINER WAND</div>
   <div class="spacer"></div>
   <div id="menu-toggle-row"><button id="panel-toggle" type="button" aria-expanded="false" aria-controls="controls-panel">☰ Menü</button></div>
-  <section id="controls-panel" aria-label="Akustik 3 Steuerung">
+  <section id="controls-panel" hidden aria-label="Akustik 3 Steuerung">
     <details class="control-menu" open>
       <summary><span>〰 Phänomen</span><span class="menu-current" id="mode-current">Reflection</span><span class="arrow">⌄</span></summary>
       <div class="menu-body">
@@ -105,9 +106,8 @@ const panelButton=$('#panel-toggle');
 function setPanel(open){panel.hidden=!open;panelButton.textContent=open?'✕ Menü':'☰ Menü';panelButton.setAttribute('aria-expanded',String(open));}
 panelButton.addEventListener('click',e=>{e.stopPropagation();setPanel(panel.hidden);});
 setPanel(false);
-setPanel(!matchMedia('(max-width:760px), (max-height:540px)').matches);
 for(const d of document.querySelectorAll('.control-menu'))d.addEventListener('toggle',()=>{if(d.open){for(const other of document.querySelectorAll('.control-menu'))if(other!==d)other.open=false;}});
-$('#overlay').addEventListener('beforexrselect',event=>{if(event.target.closest('button, summary, input, #controls-panel, #ar-launch'))event.preventDefault();});
+$('#overlay').addEventListener('beforexrselect',event=>{if(event.target.closest('button, summary, input, #controls-panel, #ar-launch, #ripley-gesture-pad'))event.preventDefault();});
 
 // ------ Three.js scene ------
 
@@ -149,7 +149,10 @@ renderer.toneMapping=THREE.ACESFilmicToneMapping;
 $('#stage').appendChild(renderer.domElement);
 const orbit=new OrbitControls(camera,renderer.domElement);orbit.enableDamping=true;orbit.target.set(0,.14,0);orbit.minDistance=.55;orbit.maxDistance=4.1;
 const placementRoot=new THREE.Group();scene.add(placementRoot);
-const contentRoot=new THREE.Group();placementRoot.add(contentRoot);
+const contentRoot=new THREE.Group();
+// Verschiebt nur die 3D-Gruppe, nicht Kamera oder WebXR-Tischanker.
+installModelHeight({root:contentRoot,mount:'#controls-panel > details.control-menu:last-of-type .menu-body'});
+installDemoNavigation({homeHref:'../../',sectionHref:'../'});placementRoot.add(contentRoot);
 const base=new THREE.Group(),setGroup=new THREE.Group();contentRoot.add(base,setGroup);
 const mat=(c,props={})=>new THREE.MeshStandardMaterial({color:c,roughness:.63,...props});
 const glow=(c,opacity=1)=>new THREE.MeshBasicMaterial({color:c,transparent:opacity<1,opacity,side:THREE.DoubleSide,depthWrite:opacity===1});
@@ -407,7 +410,12 @@ $('#place-now').addEventListener('click',e=>{e.stopPropagation();place();});
 $('#place-again').addEventListener('click',e=>{e.stopPropagation();resetPlacement();});
 const button=ARButton.createButton(renderer,{requiredFeatures:['hit-test'],optionalFeatures:['dom-overlay'],domOverlay:{root:$('#overlay')}});
 $('#ar-launch').appendChild(button);
-enablePinchScaling();
+const ripleyGestures=installModelGestures({
+  renderer,controller:controller,isPlaced:()=>placed,
+  getScale:()=>s.scale,setScale:v=>{s.scale=Math.round(v);$('#size').value=s.scale;syncTransform();},
+  getAngle:()=>s.angle,setAngle:v=>{s.angle=Math.round(v);$('#rotation').value=s.angle;syncTransform();},
+  minScale:30,maxScale:200
+});
 renderer.xr.addEventListener('sessionstart',()=>{
   document.body.classList.add('in-xr');scene.background=null;orbit.enabled=false;resetPlacement();
   if(!renderer.xr.getSession()?.domOverlayState)setStatus('AR aktiv · UI eventuell nicht sichtbar (DOM Overlay fehlt)');

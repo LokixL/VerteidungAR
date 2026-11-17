@@ -10,3 +10,7 @@
 .plot-reading-guide strong{color:#8df1d0}
 .plot-reading-guide[hidden]{display:none!important}
 @media(max-width:690px){.plot-reading-guide{font-size:11px;padding:10px}}
+
+/* Tablet-friendly direct route to the RIPLEY main menu. */
+.ripley-2d-back{position:fixed;left:max(10px,env(safe-area-inset-left));bottom:max(10px,env(safe-area-inset-bottom));z-index:1000;display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:10px 15px;border:1px solid rgba(138,234,199,.65);border-radius:13px;background:rgba(8,32,45,.96);color:#dbfff2;font:700 13px/1.2 system-ui,-apple-system,'Segoe UI',sans-serif;text-decoration:none;box-shadow:0 6px 22px rgba(0,0,0,.35);}
+.ripley-2d-back:focus-visible{outline:2px solid #b5ffdf;outline-offset:2px;}

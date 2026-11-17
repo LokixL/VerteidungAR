@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { installModelHeight, installDemoNavigation, installModelGestures } from '../../shared/ripley-controls.js';
 import { ARButton } from 'three/addons/webxr/ARButton.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
@@ -19,7 +20,7 @@ $('#app').innerHTML = `
   <div class="scene-label" id="scene-label">ADDITION · ZWEI WELLEN → EIN SIGNAL</div>
   <div class="spacer"></div>
   <div id="menu-toggle-row"><button id="panel-toggle" type="button" aria-expanded="false" aria-controls="controls-panel">☰ Menü</button></div>
-  <section id="controls-panel" aria-label="Akustik 2 Steuerung">
+  <section id="controls-panel" hidden aria-label="Akustik 2 Steuerung">
     <details class="control-menu" id="menu-drag" open>
       <summary><span>↔ Wellen selbst verschieben</span><span class="menu-current" id="drag-current">0 λ · Addition</span><span class="arrow">⌄</span></summary>
       <div class="menu-body">
@@ -139,14 +140,13 @@ function expandPanel(open){
 }
 panelBtn.addEventListener('click', e=>{e.stopPropagation();expandPanel(panel.hidden);});
 expandPanel(false);
-expandPanel(!matchMedia('(max-width:760px), (max-height:540px)').matches);
 for(const el of document.querySelectorAll('details.control-menu')){
   el.addEventListener('toggle',()=>{
     if(el.open)for(const other of document.querySelectorAll('details.control-menu'))if(other!==el)other.open=false;
   });
 }
 $('#overlay').addEventListener('beforexrselect',event=>{
-  if(event.target.closest('button, summary, input, #controls-panel, #ar-launch'))event.preventDefault();
+  if(event.target.closest('button, summary, input, #controls-panel, #ar-launch, #ripley-gesture-pad'))event.preventDefault();
 });
 
 
@@ -190,7 +190,10 @@ const orbit=new OrbitControls(camera,renderer.domElement);
 orbit.enableDamping=true;orbit.target.set(0,.19,0);orbit.minDistance=.6;orbit.maxDistance=4;
 
 const placementRoot=new THREE.Group();scene.add(placementRoot);
-const contentRoot=new THREE.Group();placementRoot.add(contentRoot);
+const contentRoot=new THREE.Group();
+// Verschiebt nur die 3D-Gruppe, nicht Kamera oder WebXR-Tischanker.
+installModelHeight({root:contentRoot,mount:'#menu-model .menu-body'});
+installDemoNavigation({homeHref:'../../',sectionHref:'../'});placementRoot.add(contentRoot);
 const structure=new THREE.Group();contentRoot.add(structure);
 const particleRoot=new THREE.Group();contentRoot.add(particleRoot);
 const curveRoot=new THREE.Group();contentRoot.add(curveRoot);
@@ -563,7 +566,12 @@ controller.addEventListener('select',place);
 $('#place-now').addEventListener('click',e=>{e.stopPropagation();place();});
 $('#place-again').addEventListener('click',e=>{e.stopPropagation();resetPlacement();});
 const arButton=ARButton.createButton(renderer,{requiredFeatures:['hit-test'],optionalFeatures:['dom-overlay'],domOverlay:{root:$('#overlay')}});
-enablePinchScaling();
+const ripleyGestures=installModelGestures({
+  renderer,controller:controller,isPlaced:()=>placed,
+  getScale:()=>st.scale,setScale:v=>{st.scale=v;$('#size-slider').value=Math.round(v*100);updateUI();},
+  getAngle:()=>st.rotation,setAngle:v=>{st.rotation=v;$('#rotation-slider').value=Math.round(v);updateUI();},
+  minScale:.3,maxScale:2.5
+});
 $('#ar-launch').appendChild(arButton);
 renderer.xr.addEventListener('sessionstart',()=>{
   document.body.classList.add('in-xr');scene.background=null;orbit.enabled=false;resetPlacement();

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { installModelHeight, installDemoNavigation, installModelGestures } from '../../shared/ripley-controls.js';
 import { ARButton } from 'three/addons/webxr/ARButton.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
@@ -20,7 +21,7 @@ $('#app').innerHTML = `
   <div class="scene-label" id="scene-label">TEMPERATURGRADIENT · SCHALLBRECHUNG</div>
   <div class="spacer"></div>
   <div id="menu-toggle-row"><button id="panel-toggle" type="button" aria-expanded="false" aria-controls="controls-panel">☰ Menü</button></div>
-  <section id="controls-panel" aria-label="Akustik 4 Steuerung">
+  <section id="controls-panel" hidden aria-label="Akustik 4 Steuerung">
     <details class="control-menu" open>
       <summary><span>〰 Thema</span><span class="menu-current" id="mode-current">Temperaturgradient</span><span class="arrow">⌄</span></summary>
       <div class="menu-body">
@@ -135,7 +136,6 @@ function setPanel(open) {
 }
 panelToggle.addEventListener('click', event => {event.stopPropagation(); setPanel(panel.hidden);});
 setPanel(false);
-setPanel(!matchMedia('(max-width:760px), (max-height:540px)').matches);
 for (const detail of document.querySelectorAll('.control-menu')) {
   detail.addEventListener('toggle', () => {
     if (!detail.open) return;
@@ -143,7 +143,7 @@ for (const detail of document.querySelectorAll('.control-menu')) {
   });
 }
 $('#overlay').addEventListener('beforexrselect', event => {
-  if (event.target.closest('button, summary, input, #controls-panel, #ar-launch')) event.preventDefault();
+  if (event.target.closest('button, summary, input, #controls-panel, #ar-launch, #ripley-gesture-pad')) event.preventDefault();
 });
 
 // ---- Math: geometrical-acoustics ray model ----
@@ -233,7 +233,10 @@ renderer.toneMapping=THREE.ACESFilmicToneMapping;
 $('#stage').appendChild(renderer.domElement);
 const orbit=new OrbitControls(camera,renderer.domElement);orbit.target.set(0,.34,0);orbit.enableDamping=true;orbit.minDistance=.6;orbit.maxDistance=4;
 const placementRoot=new THREE.Group();scene.add(placementRoot);
-const modelRoot=new THREE.Group();placementRoot.add(modelRoot);
+const modelRoot=new THREE.Group();
+// Verschiebt nur die 3D-Gruppe, nicht Kamera oder WebXR-Tischanker.
+installModelHeight({root:modelRoot,mount:'#controls-panel > details.control-menu:last-of-type .menu-body'});
+installDemoNavigation({homeHref:'../../',sectionHref:'../'});placementRoot.add(modelRoot);
 const staticGroup=new THREE.Group(),dynamicGroup=new THREE.Group(),pathsGroup=new THREE.Group(),plumeGroup=new THREE.Group();
 modelRoot.add(staticGroup,dynamicGroup,pathsGroup,plumeGroup);
 const mat=(c,opts={})=>new THREE.MeshStandardMaterial({color:c,roughness:.7,...opts});
@@ -527,7 +530,12 @@ xrController.addEventListener('select',place);
 $('#place-now').addEventListener('click',e=>{e.stopPropagation();place();});
 $('#place-again').addEventListener('click',e=>{e.stopPropagation();resetPlacement();});
 const arButton=ARButton.createButton(renderer,{requiredFeatures:['hit-test'],optionalFeatures:['dom-overlay'],domOverlay:{root:$('#overlay')}});
-enablePinchScaling();
+const ripleyGestures=installModelGestures({
+  renderer,controller:xrController,isPlaced:()=>placed,
+  getScale:()=>S.scale,setScale:v=>{S.scale=Math.round(v);$('#size').value=S.scale;syncControls();},
+  getAngle:()=>S.angle,setAngle:v=>{S.angle=Math.round(v);$('#rotation').value=S.angle;syncControls();},
+  minScale:30,maxScale:200
+});
 $('#ar-launch').appendChild(arButton);
 renderer.xr.addEventListener('sessionstart',()=>{
   document.body.classList.add('in-xr');scene.background=null;orbit.enabled=false;resetPlacement();

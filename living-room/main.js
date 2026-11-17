@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { installModelHeight, installDemoNavigation } from '../shared/ripley-controls.js';
 import { ARButton } from 'three/addons/webxr/ARButton.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -148,6 +149,9 @@ const radiationFx = new THREE.Group();
 const convectionFx = new THREE.Group();
 const conductionFx = new THREE.Group();
 const contentRoot = new THREE.Group();
+// Verschiebt nur die 3D-Gruppe, nicht Kamera oder WebXR-Tischanker.
+installModelHeight({root:contentRoot,mount:'#menu-transform .menu-content'});
+installDemoNavigation({homeHref:'../'});
 placementRoot.add(contentRoot);
 contentRoot.add(roomRoot, fireFx, radiationFx, convectionFx, conductionFx);
 const thermalFx = new THREE.Group();

@@ -1,0 +1,35 @@
+RIPLEY – konsolidiertes Projekt-Update (November 2026)
+
+GRUNDLAGE
+Das bereitgestellte komplette Projekt VerteidungAR.zip. Alle bestehenden
+Grafiken, Modelle, Demos, akustischen Berechnungen und die Ergebnisse sind enthalten.
+Das alte Git-Verzeichnis (.git) wurde absichtlich NICHT in dieses ZIP übernommen.
+
+NEU
+- Höhenverstellung für alle sechs 3D-Demos: Living Room, Fire Physics und
+  Acoustics 01 bis 04. Regler -40 bis +80 cm, Tasten +/- 5 cm.
+- Die Höhe verändert die 3D-Modellgruppe; der WebXR-Tischanker wird NICHT bewegt.
+  Auch in der normalen Browser-3D-Vorschau nutzbar.
+- Größere Navigationstasten zu den Übersichtsseiten. Beim Öffnen eines
+  Steuerpanels werden die Navigationstasten ausgeblendet, damit nichts verdeckt wird.
+- Touch-Gesten in allen vier Akustik-Demos mit separater WebXR-Overlay-Fläche
+  nach dem Platzieren (nicht mehr nur auf dem WebGL-Canvas).
+- Acoustics- und Fire-Physics-Menüs öffnen standardmäßig zugeklappt.
+- Fire Physics: optionale gleichzeitige Anzeige gekoppelter Prozesse
+  (Pyrolysis, Gasphasenverbrennung, Wärmerückkopplung) nach Figure 2.
+  Schematisch! Keine numerische Brand- oder Wärmesimulation.
+- User Analysis und Results Explorer: größerer Zurück-Button; keine Höhensteuerung.
+
+INSTALLATION
+Die gesamte ZIP enthält VerteidungAR/ als Projektordner. Bei GitHub Desktop
+am besten die Inhalte aus dem ZIP mit den Dateien im vorhandenen Repository
+zusammenführen / gleiche Dateien überschreiben. Bestehende .git NICHT löschen.
+Alternativ das separate ZIP 'RIPLEY_Update_nur_geaenderte_Dateien.zip'
+verwenden; es enthält nur die tatsächlich aktualisierten Dateien plus
+'shared/ripley-controls.js'. Wichtig: shared/ ebenfalls mitkopieren.
+Commit -> Push. Falls alte Dateien aus Browsercache geladen werden: Strg+F5.
+
+TESTS
+JavaScript-Syntax und Dateipfade werden automatisch überprüft.
+Live-AR samt echten Tablet-Touch-Ereignissen muss auf dem Samsung-Tablet
+geprüft werden. Bitte erst nach AR-Platzierung das Modell bewegen.
